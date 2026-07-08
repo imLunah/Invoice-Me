@@ -249,9 +249,11 @@
       width: auto;
       min-height: 0;
       margin: 0;
-      padding: 0;
+      padding: .55in .6in;
     }
-    @page { size: letter; margin: .55in .6in; }
+    /* margin:0 removes the browser's auto URL/page-number header & footer;
+       the page's own spacing is provided by .sheet padding above */
+    @page { size: letter; margin: 0; }
   }
 </style>
 </head>
