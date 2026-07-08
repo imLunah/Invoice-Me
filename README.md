@@ -1,4 +1,4 @@
-# Code Ninjas Yorba Linda — Invoice Creator
+# InvoiceMe
 
 A single-page web app for generating enrichment-service invoices for schools/organizations.
 Fill in the form, review the live preview, then **Save as PDF / Print**.
@@ -12,8 +12,6 @@ Fill in the form, review the live preview, then **Save as PDF / Print**.
 | -------------- | ------------- |
 | Create Lite    | $229 |
 | Create Regular | $299 |
-| Create 1x      | $229 |
-| Create 2x      | $299 |
 | Create 4x      | $399 |
 | JR 1x          | $229 |
 | JR 2x          | $299 |
