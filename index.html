@@ -378,7 +378,6 @@ Seal Beach, CA 90740
     "JR 1x": 229,
     "JR 2x": 299
   };
-  const MIN_ROWS = 4; // table always shows at least 4 rows like the original doc
 
   const $ = id => document.getElementById(id);
   const store = {
@@ -545,11 +544,6 @@ Seal Beach, CA 90740
       tbody.appendChild(tr);
       if (hasData) total += s.amount;
     });
-    for (let i = students.length; i < MIN_ROWS; i++) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>&nbsp;</td><td class="amt"></td>`;
-      tbody.appendChild(tr);
-    }
     $("pTotal").textContent = "TOTAL " + money(total);
 
     const first = students[0] || {};
