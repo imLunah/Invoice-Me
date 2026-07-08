@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Me</title>
+<style>
+  :root {
+    --blue: #1f5fa8;
+    --dark: #4a4a4a;
+    --red: #c00000;
+    --border: #d9dee5;
+    --bg: #eef1f5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: #222;
+  }
+  .app {
+    display: flex;
+    gap: 24px;
+    padding: 24px;
+    max-width: 1500px;
+    margin: 0 auto;
+    align-items: flex-start;
+  }
+
+  /* ---------- FORM PANEL ---------- */
+  .panel {
+    width: 420px;
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    padding: 22px;
+  }
+  .panel h1 {
+    font-size: 20px;
+    color: var(--blue);
+    margin-bottom: 4px;
+  }
+  .panel .subtitle {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 18px;
+  }
+  .section {
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    margin-top: 14px;
+  }
+  .section h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--blue);
+    margin-bottom: 10px;
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin: 8px 0 3px;
+  }
+  input, select {
+    width: 100%;
+    padding: 7px 9px;
+    font-size: 14px;
+    border: 1px solid #c8cfd8;
+    border-radius: 6px;
+    background: #fff;
+  }
+  input:focus, select:focus {
+    outline: 2px solid var(--blue);
+    outline-offset: -1px;
+  }
+  .row2 { display: flex; gap: 10px; }
+  .row2 > div { flex: 1; }
+  .row3 { display: flex; gap: 10px; }
+  .row3 > div { flex: 1; }
+
+  .student-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px 12px;
+    margin-bottom: 10px;
+    background: #fafbfc;
+    position: relative;
+  }
+  .student-card .remove-btn {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    border: none;
+    background: none;
+    color: #b00;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+  }
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-secondary {
+    background: #e8edf4;
+    color: var(--blue);
+  }
+  .btn-primary {
+    background: var(--blue);
+    color: #fff;
+    width: 100%;
+    margin-top: 16px;
+    padding: 13px;
+    font-size: 15px;
+  }
+  .btn-primary:hover { background: #17497f; }
+  .btn-small {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+  .hint { font-size: 11px; color: #999; margin-top: 3px; }
+  .school-toolbar { display: flex; gap: 8px; margin-bottom: 4px; }
+  .school-toolbar select { flex: 1; }
+
+  /* ---------- INVOICE PREVIEW ---------- */
+  .preview-wrap { flex: 1; min-width: 0; }
+  .preview-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .preview-toolbar span { font-size: 13px; color: #666; }
+
+  .sheet {
+    background: #fff;
+    width: 8.5in;
+    min-height: 11in;
+    max-width: 100%;
+    margin: 0 auto;
+    box-shadow: 0 3px 18px rgba(0,0,0,.15);
+    padding: .55in .6in;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: #333;
+  }
+
+  .inv-top { display: flex; justify-content: space-between; }
+  .inv-company-name {
+    font-size: 26px;
+    font-weight: 700;
+    color: #595959;
+    line-height: 1.25;
+    max-width: 4in;
+  }
+  .inv-title-block { text-align: right; }
+  .inv-title {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--blue);
+    letter-spacing: .5px;
+  }
+  .inv-meta { margin-top: 10px; font-size: 11px; }
+  .inv-meta .lbl { color: var(--blue); font-weight: 700; }
+  .inv-meta .val { color: #595959; font-weight: 700; }
+  .inv-meta div { margin-bottom: 6px; }
+
+  .inv-address {
+    margin-top: 14px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #595959;
+    line-height: 1.5;
+    white-space: pre-line;
+  }
+
+  .inv-mid {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 26px;
+    font-size: 10.5px;
+  }
+  .inv-mid .left { color: #808080; line-height: 1.9; }
+  .inv-mid .left .strong { color: #595959; font-weight: 700; }
+  .inv-mid .left .for-line .for { color: var(--blue); font-weight: 700; }
+  .inv-mid .right { text-align: right; line-height: 1.9; max-width: 3.4in; }
+  .inv-mid .right .billto-lbl { color: var(--blue); font-weight: 700; }
+  .inv-mid .right .billto-val { color: #595959; font-weight: 700; }
+  .inv-mid .right .addr { color: #595959; font-weight: 700; }
+  .inv-mid .right .email-line { color: var(--red); font-weight: 700; }
+
+  .inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 10.5px;
+  }
+  .inv-table th, .inv-table td {
+    border: 1.5px solid #000;
+    padding: 9px 10px;
+  }
+  .inv-table th {
+    color: var(--blue);
+    font-size: 10px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .inv-table th.amt-col { width: 1.3in; }
+  .inv-table td { font-weight: 700; color: #333; height: 30px; }
+  .inv-table td.amt { text-align: right; white-space: nowrap; }
+
+  .inv-total {
+    text-align: right;
+    margin-top: 34px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue);
+  }
+
+  .inv-footer {
+    margin-top: 26px;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.6;
+    color: #595959;
+    font-weight: 700;
+  }
+  .inv-footer p { margin-bottom: 12px; }
+  .inv-footer .note { color: var(--red); }
+  .inv-footer .thanks { color: var(--blue); }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    body { background: #fff; }
+    .app { padding: 0; display: block; }
+    .panel, .preview-toolbar { display: none !important; }
+    .preview-wrap { width: auto; }
+    .sheet {
+      box-shadow: none;
+      width: auto;
+      min-height: 0;
+      margin: 0;
+      padding: 0;
+    }
+    @page { size: letter; margin: .55in .6in; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ FORM ============ -->
+  <div class="panel">
+    <h1>Invoice Me</h1>
+    <div class="subtitle">Code Ninjas Yorba Linda — fill in the form, then Save as PDF.</div>
+
+    <div class="section">
+      <h2>Invoice Details</h2>
+      <div class="row2">
+        <div>
+          <label>Invoice Date</label>
+          <input type="date" id="invDate">
+        </div>
+        <div>
+          <label>Invoice Number</label>
+          <input type="text" id="invNumber" placeholder="auto">
+          <div class="hint">Auto: initials + MMYY. Type to override.</div>
+        </div>
+      </div>
+      <label>Month of Service</label>
+      <select id="serviceMonth"></select>
+    </div>
+
+    <div class="section">
+      <h2>Bill To (School)</h2>
+      <div class="school-toolbar">
+        <select id="savedSchools">
+          <option value="">— Saved schools —</option>
+        </select>
+        <button class="btn btn-secondary btn-small" id="saveSchoolBtn" title="Save current school for reuse">Save</button>
+        <button class="btn btn-secondary btn-small" id="deleteSchoolBtn" title="Delete selected saved school">✕</button>
+      </div>
+      <label>School / Organization Name</label>
+      <input type="text" id="billToName" placeholder="School name">
+      <label>Address</label>
+      <input type="text" id="billToAddress" placeholder="Street, City, State ZIP">
+      <label>Email Invoice To</label>
+      <input type="email" id="billToEmail" placeholder="name@school.com">
+    </div>
+
+    <div class="section">
+      <h2>Students</h2>
+      <div id="students"></div>
+      <button class="btn btn-secondary btn-small" id="addStudentBtn">+ Add new order</button>
+    </div>
+
+    <button class="btn btn-primary" id="printBtn">🖨️ Save as PDF / Print</button>
+    <div class="hint" style="text-align:center;margin-top:8px">In the print dialog choose “Save as PDF”.</div>
+  </div>
+
+  <!-- ============ PREVIEW ============ -->
+  <div class="preview-wrap">
+    <div class="preview-toolbar">
+      <span>Live preview — this is exactly what prints.</span>
+      <span id="fileNameHint"></span>
+    </div>
+    <div class="sheet" id="sheet">
+      <div class="inv-top">
+        <div class="inv-company-name">Code Ninjas Yorba Linda, CA</div>
+        <div class="inv-title-block">
+          <div class="inv-title">INVOICE</div>
+          <div class="inv-meta">
+            <div><span class="lbl">INVOICE NUMBER </span><span class="val" id="pInvNumber">#—</span></div>
+            <div><span class="lbl">INVOICE DATE </span><span class="val" id="pInvDate">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="inv-address">3551 Daffodil Cir
+Seal Beach, CA 90740
+(657) 258-2633</div>
+
+      <div class="inv-mid">
+        <div class="left">
+          <div>yorbalindaca@codeninjas.com | https://www.codeninjas.com/ca-yorba-linda</div>
+          <div class="strong">MAKE CHECKS PAYABLE TO: Code Ninjas Yorba Linda, CA</div>
+          <div class="for-line"><span class="for">FOR</span> <span class="strong">ENRICHMENT SERVICES PHONE: (626) 667-4914</span></div>
+        </div>
+        <div class="right">
+          <div><span class="billto-lbl">BILL TO </span><span class="billto-val" id="pBillToName">—</span></div>
+          <div class="addr" id="pBillToAddress">—</div>
+          <div class="email-line">EMAIL INVOICE TO: <span id="pBillToEmail">—</span></div>
+        </div>
+      </div>
+
+      <table class="inv-table">
+        <thead>
+          <tr>
+            <th>STUDENT NAME&nbsp;&nbsp;CERTIFICATE NUMBER&nbsp;&nbsp;DATES OF SERVICE&nbsp;&nbsp;DESCRIPTION OF SERVICE</th>
+            <th class="amt-col">AMOUNT</th>
+          </tr>
+        </thead>
+        <tbody id="pRows"></tbody>
+      </table>
+
+      <div class="inv-total" id="pTotal">TOTAL $0.00</div>
+
+      <div class="inv-footer">
+        <p>If you have any questions concerning this invoice, use the following contact information:<br>
+        yorbalindaca@codeninjas.com, (714)462-2633</p>
+        <p class="note">IMPORTANT NOTE: The vendor's information (name, address, and pay to) must match the information for the W9 on file. If there are any changes to a vendor's information - a new W9 should be submitted and a copy must be included with the next invoice submission</p>
+        <p class="thanks">THANK YOU FOR BEING A VALUED VENDOR!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const PROGRAMS = ["Create Lite", "Create Regular", "Create 1x", "Create 2x", "Create 4x", "JR 1x", "JR 2x"];
+  const CUSTOM = "__custom";
+  const DEFAULT_PRICES = {
+    "Create Lite": 229,
+    "Create Regular": 299,
+    "Create 1x": 229,
+    "Create 2x": 299,
+    "Create 4x": 399,
+    "JR 1x": 229,
+    "JR 2x": 299
+  };
+  const MIN_ROWS = 4; // table always shows at least 4 rows like the original doc
+
+  const $ = id => document.getElementById(id);
+  const store = {
+    get(key, fallback) {
+      try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+      catch { return fallback; }
+    },
+    set(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+  };
+
+  let prices = { ...DEFAULT_PRICES, ...store.get("cn_prices", {}) };
+  let invNumberOverridden = false;
+
+  /* ---------- Month dropdown ---------- */
+  MONTHS.forEach(m => {
+    const o = document.createElement("option");
+    o.value = o.textContent = m;
+    $("serviceMonth").appendChild(o);
+  });
+
+  /* ---------- Students ---------- */
+  function addStudent(data = {}) {
+    const card = document.createElement("div");
+    card.className = "student-card";
+    card.innerHTML = `
+      <button class="remove-btn" title="Remove student">✕</button>
+      <div class="row2">
+        <div><label>First Name</label><input type="text" class="s-first" value="${data.first || ""}"></div>
+        <div><label>Last Name</label><input type="text" class="s-last" value="${data.last || ""}"></div>
+      </div>
+      <div class="row3">
+        <div style="flex:1.4"><label>Program</label>
+          <select class="s-program">${PROGRAMS.map(p => `<option${p === data.program ? " selected" : ""}>${p}</option>`).join("")}<option value="${CUSTOM}">Custom…</option></select>
+          <input type="text" class="s-program-custom" placeholder="Type program name" style="display:none;margin-top:6px">
+        </div>
+        <div><label>Service Code</label><input type="text" class="s-code" value="${data.code || ""}" placeholder="e.g. 331"></div>
+        <div><label>Amount ($)</label><input type="number" step="0.01" min="0" class="s-amount" value="${data.amount ?? prices[data.program || PROGRAMS[0]]}"></div>
+      </div>`;
+    const customInput = card.querySelector(".s-program-custom");
+    card.querySelector(".remove-btn").addEventListener("click", () => {
+      if ($("students").children.length > 1) { card.remove(); render(); }
+    });
+    card.querySelector(".s-program").addEventListener("change", e => {
+      const isCustom = e.target.value === CUSTOM;
+      customInput.style.display = isCustom ? "" : "none";
+      if (isCustom) {
+        customInput.focus();
+      } else {
+        card.querySelector(".s-amount").value = prices[e.target.value] ?? "";
+      }
+      render();
+    });
+    card.querySelector(".s-amount").addEventListener("change", e => {
+      // remember the last price used for this program (skip custom, name isn't fixed)
+      const prog = card.querySelector(".s-program").value;
+      const v = parseFloat(e.target.value);
+      if (prog !== CUSTOM && !isNaN(v)) { prices[prog] = v; store.set("cn_prices", prices); }
+    });
+    card.querySelectorAll("input, select").forEach(el => el.addEventListener("input", render));
+    $("students").appendChild(card);
+  }
+
+  function getStudents() {
+    return [...document.querySelectorAll(".student-card")].map(c => {
+      const progSel = c.querySelector(".s-program").value;
+      const program = progSel === CUSTOM
+        ? c.querySelector(".s-program-custom").value.trim()
+        : progSel;
+      return {
+        first: c.querySelector(".s-first").value.trim(),
+        last: c.querySelector(".s-last").value.trim(),
+        program,
+        code: c.querySelector(".s-code").value.trim(),
+        amount: parseFloat(c.querySelector(".s-amount").value) || 0
+      };
+    });
+  }
+
+  /* ---------- Saved schools ---------- */
+  function refreshSchoolList() {
+    const schools = store.get("cn_schools", {});
+    const sel = $("savedSchools");
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Saved schools —</option>';
+    Object.keys(schools).sort().forEach(name => {
+      const o = document.createElement("option");
+      o.value = o.textContent = name;
+      sel.appendChild(o);
+    });
+    sel.value = current;
+  }
+  $("saveSchoolBtn").addEventListener("click", () => {
+    const name = $("billToName").value.trim();
+    if (!name) { alert("Enter a school name first."); return; }
+    const schools = store.get("cn_schools", {});
+    schools[name] = { address: $("billToAddress").value.trim(), email: $("billToEmail").value.trim() };
+    store.set("cn_schools", schools);
+    refreshSchoolList();
+    $("savedSchools").value = name;
+  });
+  $("deleteSchoolBtn").addEventListener("click", () => {
+    const name = $("savedSchools").value;
+    if (!name) return;
+    const schools = store.get("cn_schools", {});
+    delete schools[name];
+    store.set("cn_schools", schools);
+    refreshSchoolList();
+  });
+  $("savedSchools").addEventListener("change", e => {
+    const s = store.get("cn_schools", {})[e.target.value];
+    if (s) {
+      $("billToName").value = e.target.value;
+      $("billToAddress").value = s.address;
+      $("billToEmail").value = s.email;
+      render();
+    }
+  });
+
+  /* ---------- Invoice number ---------- */
+  function autoInvNumber() {
+    const s = getStudents()[0] || {};
+    const monthIdx = MONTHS.indexOf($("serviceMonth").value); // month of service, not invoice date
+    const mm = String((monthIdx < 0 ? 0 : monthIdx) + 1).padStart(2, "0");
+    const d = $("invDate").value ? new Date($("invDate").value + "T00:00:00") : new Date();
+    const yy = String(d.getFullYear()).slice(-2);
+    const initials = (s.first?.[0] || "") + (s.last?.[0] || "");
+    return initials ? (initials.toUpperCase() + mm + yy) : "";
+  }
+  $("invNumber").addEventListener("input", () => {
+    invNumberOverridden = $("invNumber").value.trim() !== "";
+    render();
+  });
+
+  /* ---------- Render ---------- */
+  const money = n => "$" + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  function render() {
+    if (!invNumberOverridden) $("invNumber").value = autoInvNumber();
+    const num = $("invNumber").value.trim();
+    $("pInvNumber").textContent = num ? "#" + num.replace(/^#/, "") : "#—";
+
+    const dv = $("invDate").value;
+    $("pInvDate").textContent = dv
+      ? `${dv.slice(5,7)}/${dv.slice(8,10)}/${dv.slice(0,4)}`
+      : "—";
+
+    $("pBillToName").textContent = $("billToName").value.trim() || "—";
+    $("pBillToAddress").textContent = $("billToAddress").value.trim() || "—";
+    $("pBillToEmail").textContent = $("billToEmail").value.trim() || "—";
+
+    const month = $("serviceMonth").value;
+    const students = getStudents();
+    const tbody = $("pRows");
+    tbody.innerHTML = "";
+    let total = 0;
+    students.forEach(s => {
+      const tr = document.createElement("tr");
+      const hasData = s.first || s.last;
+      const name = [s.first, s.last].filter(Boolean).join(" ");
+      const desc = hasData
+        ? `${name} ${month} ${s.program}${s.code ? " Service Code: " + s.code : ""}`
+        : "";
+      tr.innerHTML = `<td>${desc}</td><td class="amt">${hasData && s.amount ? money(s.amount) : ""}</td>`;
+      tbody.appendChild(tr);
+      if (hasData) total += s.amount;
+    });
+    for (let i = students.length; i < MIN_ROWS; i++) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>&nbsp;</td><td class="amt"></td>`;
+      tbody.appendChild(tr);
+    }
+    $("pTotal").textContent = "TOTAL " + money(total);
+
+    const first = students[0] || {};
+    const fname = (first.first && first.last)
+      ? `${first.first}${first.last}_${($("billToName").value.trim() || "Invoice").split(/\s+/)[0]}.pdf`
+      : "";
+    $("fileNameHint").textContent = fname ? "Suggested file name: " + fname : "";
+    document.title = fname ? fname.replace(/\.pdf$/, "") : "Invoice Me";
+  }
+
+  /* ---------- Print ---------- */
+  $("printBtn").addEventListener("click", () => window.print());
+  $("addStudentBtn").addEventListener("click", () => { addStudent(); render(); });
+  ["invDate", "billToName", "billToAddress", "billToEmail"].forEach(id =>
+    $(id).addEventListener("input", render));
+  $("serviceMonth").addEventListener("change", render);
+
+  /* ---------- Init ---------- */
+  const today = new Date();
+  $("invDate").value = today.toISOString().slice(0, 10);
+  $("serviceMonth").value = MONTHS[today.getMonth()];
+  addStudent();
+  refreshSchoolList();
+  render();
+})();
+</script>
+</body>
+</html>
