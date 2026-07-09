@@ -614,7 +614,7 @@ Seal Beach, CA 90740
       const hasData = s.first || s.last;
       const name = [s.first, s.last].filter(Boolean).join(" ");
       const desc = hasData
-        ? `${name} ${month} ${s.program}${s.code ? " Service Code: " + s.code : ""}`
+        ? `${name} ${month} ${s.program}${s.code ? " " + s.code : ""}`
         : "";
       tr.innerHTML = `<td>${desc}</td><td class="amt">${hasData && s.amount ? money(s.amount) : ""}</td>`;
       tbody.appendChild(tr);
