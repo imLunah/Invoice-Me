@@ -6,22 +6,36 @@
 <title>Invoice Me</title>
 <style>
   :root {
+    /* invoice sheet (printed document) */
     --blue: #1f5fa8;
     --dark: #4a4a4a;
     --red: #c00000;
-    --border: #d9dee5;
-    --bg: #eef1f5;
+
+    /* app chrome */
+    --paper: #ebe7dd;
+    --card: #fffdf8;
+    --ink: #17160f;
+    --ink-soft: #6d6960;
+    --rule: #cec9bb;
+    --accent: #b3241f;
+    --grid: rgba(23,22,15,.05);
+    --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "Roboto Mono", monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: #222;
+    font-family: var(--sans);
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 22px 22px;
   }
   .app {
     display: flex;
-    gap: 24px;
-    padding: 24px;
+    gap: 40px;
+    padding: 40px 32px;
     max-width: 1500px;
     margin: 0 auto;
     align-items: flex-start;
@@ -29,106 +43,143 @@
 
   /* ---------- FORM PANEL ---------- */
   .panel {
-    width: 420px;
+    counter-reset: sec;
+    width: 400px;
     flex-shrink: 0;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.08);
-    padding: 22px;
+    background: var(--card);
+    border: 1px solid var(--ink);
+    box-shadow: 8px 8px 0 rgba(23,22,15,.07);
+    padding: 26px 24px 28px;
   }
   .panel h1 {
-    font-size: 20px;
-    color: var(--blue);
-    margin-bottom: 4px;
+    font: 700 28px/.95 var(--sans);
+    text-transform: uppercase;
+    letter-spacing: -.02em;
   }
   .panel .subtitle {
-    font-size: 13px;
-    color: #777;
-    margin-bottom: 18px;
+    margin-top: 9px;
+    padding-bottom: 18px;
+    border-bottom: 3px solid var(--accent);
+    font: 10px/1.6 var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ink-soft);
   }
   .section {
-    border-top: 1px solid var(--border);
-    padding-top: 14px;
-    margin-top: 14px;
+    border-top: 1px solid var(--ink);
+    padding-top: 16px;
+    margin-top: 24px;
   }
   .section h2 {
-    font-size: 12px;
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    font: 600 10px var(--mono);
     text-transform: uppercase;
-    letter-spacing: .06em;
-    color: var(--blue);
-    margin-bottom: 10px;
+    letter-spacing: .14em;
+    margin-bottom: 12px;
+  }
+  .section h2::before {
+    counter-increment: sec;
+    content: counter(sec, decimal-leading-zero);
+    color: var(--accent);
   }
   label {
     display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: #555;
-    margin: 8px 0 3px;
+    font: 9px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ink-soft);
+    margin: 12px 0 5px;
   }
   input, select {
     width: 100%;
-    padding: 7px 9px;
-    font-size: 14px;
-    border: 1px solid #c8cfd8;
-    border-radius: 6px;
-    background: #fff;
+    padding: 9px 10px;
+    font: 13px var(--mono);
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+  }
+  select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 28px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M0 0h9L4.5 6z' fill='%2317160f'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
   }
   input:focus, select:focus {
-    outline: 2px solid var(--blue);
-    outline-offset: -1px;
+    outline: none;
+    border-color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--ink);
+    background-color: #fff;
   }
   .row2 { display: flex; gap: 10px; }
   .row2 > div { flex: 1; }
   .row3 { display: flex; gap: 10px; }
   .row3 > div { flex: 1; }
 
+  #students { counter-reset: order; }
   .student-card {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px 12px;
-    margin-bottom: 10px;
-    background: #fafbfc;
     position: relative;
+    border-top: 1px solid var(--rule);
+    padding: 14px 0 18px 28px;
+  }
+  .student-card:first-of-type { border-top: none; }
+  .student-card::before {
+    counter-increment: order;
+    content: counter(order, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 30px;
+    font: 10px var(--mono);
+    letter-spacing: .05em;
+    color: var(--ink-soft);
   }
   .student-card .remove-btn {
     position: absolute;
-    top: 6px;
-    right: 8px;
+    top: 14px;
+    right: 0;
     border: none;
     background: none;
-    color: #b00;
-    font-size: 16px;
+    color: var(--ink-soft);
+    font: 12px var(--mono);
     cursor: pointer;
-    padding: 2px 6px;
+    padding: 2px 4px;
   }
+  .student-card .remove-btn:hover { color: var(--accent); }
   .btn {
     display: inline-block;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 14px;
-    font-weight: 600;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    padding: 10px 14px;
+    font: 600 11px/1 var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .09em;
     cursor: pointer;
   }
   .btn-secondary {
-    background: #e8edf4;
-    color: var(--blue);
+    background: transparent;
+    color: var(--ink);
   }
+  .btn-secondary:hover { background: var(--ink); color: var(--paper); }
   .btn-primary {
-    background: var(--blue);
+    background: var(--ink);
     color: #fff;
     width: 100%;
-    margin-top: 16px;
-    padding: 13px;
-    font-size: 15px;
-  }
-  .btn-primary:hover { background: #17497f; }
-  .btn-small {
-    padding: 6px 10px;
+    margin-top: 26px;
+    padding: 15px;
     font-size: 12px;
-    border-radius: 6px;
+    letter-spacing: .16em;
   }
-  .hint { font-size: 11px; color: #999; margin-top: 3px; }
+  .btn-primary:hover { background: var(--accent); border-color: var(--accent); }
+  .btn-small { padding: 8px 10px; font-size: 10px; }
+  .hint {
+    font: 10px/1.5 var(--mono);
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
   .school-toolbar { display: flex; gap: 8px; margin-bottom: 4px; }
   .school-toolbar select { flex: 1; }
 
@@ -137,10 +188,23 @@
   .preview-toolbar {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+    align-items: baseline;
+    gap: 16px;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 8px;
+    margin-bottom: 22px;
   }
-  .preview-toolbar span { font-size: 13px; color: #666; }
+  .preview-toolbar span {
+    font: 10px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--ink);
+  }
+  #fileNameHint {
+    text-transform: none;
+    letter-spacing: .02em;
+    color: var(--ink-soft);
+  }
 
   .sheet {
     background: #fff;
@@ -148,10 +212,16 @@
     min-height: 11in;
     max-width: 100%;
     margin: 0 auto;
-    box-shadow: 0 3px 18px rgba(0,0,0,.15);
+    border: 1px solid var(--ink);
+    box-shadow: 10px 10px 0 rgba(23,22,15,.07);
     padding: .55in .6in;
     font-family: "Helvetica Neue", Arial, sans-serif;
     color: #333;
+  }
+
+  @media (max-width: 1040px) {
+    .app { flex-direction: column; gap: 32px; padding: 24px 16px; }
+    .panel { width: 100%; }
   }
 
   .inv-top { display: flex; justify-content: space-between; }
@@ -240,12 +310,13 @@
 
   /* ---------- PRINT ---------- */
   @media print {
-    body { background: #fff; }
+    body { background: #fff; background-image: none; }
     .app { padding: 0; display: block; }
     .panel, .preview-toolbar { display: none !important; }
     .preview-wrap { width: auto; }
     .sheet {
       box-shadow: none;
+      border: none;
       width: auto;
       min-height: 0;
       margin: 0;
@@ -263,7 +334,7 @@
   <!-- ============ FORM ============ -->
   <div class="panel">
     <h1>Invoice Me</h1>
-    <div class="subtitle">Code Ninjas Yorba Linda — fill in the form, then Save as PDF.</div>
+    <div class="subtitle">Code Ninjas Yorba Linda</div>
 
     <div class="section">
       <h2>Saved Invoices</h2>
@@ -317,8 +388,8 @@
       <button class="btn btn-secondary btn-small" id="addStudentBtn">+ Add new order</button>
     </div>
 
-    <button class="btn btn-primary" id="printBtn">🖨️ Save as PDF / Print</button>
-    <div class="hint" style="text-align:center;margin-top:8px">In the print dialog choose “Save as PDF”.</div>
+    <button class="btn btn-primary" id="printBtn">Save as PDF / Print</button>
+    <div class="hint" style="margin-top:10px">In the print dialog choose “Save as PDF”.</div>
   </div>
 
   <!-- ============ PREVIEW ============ -->
