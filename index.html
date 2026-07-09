@@ -183,19 +183,10 @@
   .preview-wrap { flex: 1; min-width: 0; }
   .preview-toolbar {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     gap: 16px;
     margin-bottom: 14px;
-  }
-  .badge {
-    display: inline-block;
-    background: var(--accent-tint);
-    color: var(--accent);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 6px 12px;
-    border-radius: 8px;
   }
   #fileNameHint {
     font-size: 12px;
@@ -398,7 +389,6 @@
   <!-- ============ PREVIEW ============ -->
   <div class="preview-wrap">
     <div class="preview-toolbar">
-      <span class="badge">Live Preview</span>
       <span id="fileNameHint"></span>
     </div>
     <div class="sheet" id="sheet">
