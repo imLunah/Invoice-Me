@@ -532,8 +532,12 @@
       <h2>Letterhead</h2>
       <label>Location Line</label>
       <input type="text" id="olLocation" placeholder="Yorba Linda, CA">
-      <label>Footer Contact Line</label>
-      <input type="text" id="olFooter" placeholder="Code Ninjas, Yorba Linda, CA | address | phone">
+      <label>Center</label>
+      <select id="olFooter">
+        <option value="Code Ninjas, Yorba Linda, CA | 664 N Rose Dr, Placentia, CA 92870 | (714) 462-2633">Code Ninjas Yorba Linda</option>
+        <option value="Code Ninjas, Fullerton, CA | 1472 S Harbor Blvd #12, Fullerton, CA 90631 | (657) 258-2633">Code Ninjas Fullerton</option>
+        <option value="Code Ninjas, Cerritos, CA | 11900 South St Suite 114, Cerritos, CA 90703 | (562) 732-2633">Code Ninjas Cerritos</option>
+      </select>
       <div class="hint">Shown in the blue bar at the bottom of the letter.</div>
     </div>
 
@@ -1009,7 +1013,6 @@ Seal Beach, CA 90740
   $("olSignDate").value = todayISO;
   $("olDojoWage").value = "16.50";
   $("olSchoolWage").value = "18";
-  $("olFooter").value = "Code Ninjas, Yorba Linda, CA";
   refreshOfferList();
   renderOffer();
 
