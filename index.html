@@ -539,6 +539,16 @@
         <option value="Code Ninjas, Cerritos, CA | 11900 South St Suite 114, Cerritos, CA 90703 | (562) 732-2633">Code Ninjas Cerritos</option>
       </select>
       <div class="hint">Shown in the blue bar at the bottom of the letter.</div>
+
+      <label style="margin-top:14px">Add a center</label>
+      <input type="text" id="newCenterName" placeholder="Center name (e.g. Anaheim)">
+      <input type="text" id="newCenterAddress" placeholder="Street, City, CA ZIP" style="margin-top:6px">
+      <input type="text" id="newCenterPhone" placeholder="(000) 000-0000" style="margin-top:6px">
+      <div class="school-toolbar" style="margin-top:8px">
+        <button class="btn btn-secondary btn-small" id="addCenterBtn" style="flex:1">+ Add center</button>
+        <button class="btn btn-secondary btn-small" id="delCenterBtn" title="Remove the selected center (only centers you added)">✕</button>
+      </div>
+      <div class="hint">Added centers are saved on this device and appear in the dropdown above.</div>
     </div>
 
     <button class="btn btn-primary" id="olPrintBtn">Save as PDF / Print</button>
@@ -929,6 +939,41 @@ Seal Beach, CA 90740
   }
   OL_FIELDS.forEach(id => $(id).addEventListener("input", renderOffer));
 
+  /* ---------- Custom centers (footer dropdown) ---------- */
+  const CENTER_KEY = "cn_centers";
+  const centerValue = c => `Code Ninjas, ${c.name}, CA | ${c.address} | ${c.phone}`;
+  function addCenterOption(c, select) {
+    const opt = document.createElement("option");
+    opt.value = centerValue(c);
+    opt.textContent = "Code Ninjas " + c.name;
+    opt.dataset.custom = "1";
+    $("olFooter").appendChild(opt);
+    if (select) $("olFooter").value = opt.value;
+  }
+  function loadCenters() {
+    store.get(CENTER_KEY, []).forEach(c => addCenterOption(c));
+  }
+  $("addCenterBtn").addEventListener("click", () => {
+    const name = $("newCenterName").value.trim();
+    const address = $("newCenterAddress").value.trim();
+    const phone = $("newCenterPhone").value.trim();
+    if (!name || !address || !phone) { alert("Enter the center name, address, and phone."); return; }
+    const centers = store.get(CENTER_KEY, []);
+    centers.push({ name, address, phone });
+    store.set(CENTER_KEY, centers);
+    addCenterOption({ name, address, phone }, true);
+    $("newCenterName").value = $("newCenterAddress").value = $("newCenterPhone").value = "";
+    renderOffer();
+  });
+  $("delCenterBtn").addEventListener("click", () => {
+    const opt = $("olFooter").selectedOptions[0];
+    if (!opt || opt.dataset.custom !== "1") { alert("Select a center you added to remove it."); return; }
+    store.set(CENTER_KEY, store.get(CENTER_KEY, []).filter(c => centerValue(c) !== opt.value));
+    opt.remove();
+    $("olFooter").selectedIndex = 0;
+    renderOffer();
+  });
+
   /* ---------- Saved offer letters ---------- */
   function refreshOfferList() {
     const offers = store.get("cn_offers", {});
@@ -1013,6 +1058,7 @@ Seal Beach, CA 90740
   $("olSignDate").value = todayISO;
   $("olDojoWage").value = "16.50";
   $("olSchoolWage").value = "18";
+  loadCenters();
   refreshOfferList();
   renderOffer();
 
