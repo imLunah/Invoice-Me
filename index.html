@@ -197,18 +197,31 @@
     background: #fff;
     width: 8.5in;
     min-height: 11in;
-    max-width: 100%;
     margin: 0 auto;
     border-radius: 12px;
     box-shadow: var(--shadow);
     padding: .55in .6in;
     font-family: "Helvetica Neue", Arial, sans-serif;
     color: #333;
+    /* scaled by JS (fitSheet) to fit narrow viewports; print resets it */
+    zoom: var(--sheet-zoom, 1);
   }
 
   @media (max-width: 1040px) {
     .app { flex-direction: column; gap: 32px; padding: 24px 16px; }
     .panel { width: 100%; }
+    .preview-wrap { width: 100%; }
+  }
+
+  @media (max-width: 640px) {
+    .app { padding: 14px 10px; gap: 18px; }
+    .panel { padding: 18px 14px; }
+    .row2, .row3 { flex-direction: column; gap: 0; }
+    /* 16px stops iOS Safari from zooming in when a field is focused */
+    input, select { font-size: 16px; }
+    .summary { gap: 20px; }
+    .summary .val { font-size: 16px; }
+    .preview-toolbar { justify-content: flex-start; }
   }
 
   .inv-top { display: flex; justify-content: space-between; }
@@ -295,6 +308,75 @@
   .inv-footer .note { color: var(--red); }
   .inv-footer .thanks { color: var(--blue); }
 
+  /* ---------- MODE TOGGLE ---------- */
+  [hidden] { display: none !important; }
+  .mode-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+  .mode-toggle button {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--muted);
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .mode-toggle button.active {
+    background: var(--card);
+    color: var(--accent);
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+  }
+
+  /* ---------- OFFER LETTER PREVIEW ---------- */
+  #offerSheet {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    color: #4a4a4a;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  .ol-inner { padding: .55in .65in 0; flex: 1 0 auto; }
+  .ol-logo {
+    text-align: right;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: .5px;
+    color: #1a1a1a;
+    margin-bottom: 34px;
+  }
+  .ol-logo span { color: var(--blue); }
+  .ol-body p { margin-bottom: 12px; }
+  .ol-dear { margin-top: 2px; font-weight: 700; }
+  .ol-body ul { margin: 0 0 12px 22px; }
+  .ol-body li { margin-bottom: 3px; }
+  .ol-sign-row { display: flex; justify-content: space-between; margin-top: 6px; }
+  .ol-sign-row > div > div { margin-bottom: 5px; }
+  .ol-sign {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--blue);
+  }
+  .ol-sign-right { min-width: 2.1in; }
+  .ol-footer {
+    background: #3f7cb8;
+    color: #fff;
+    text-align: center;
+    padding: 13px 16px;
+    font-size: 11px;
+    margin-top: 34px;
+  }
+
   /* ---------- PRINT ---------- */
   @media print {
     body { background: #fff; background-image: none; }
@@ -305,11 +387,14 @@
       box-shadow: none;
       border: none;
       border-radius: 0;
+      zoom: 1;
       width: auto;
       min-height: 0;
       margin: 0;
       padding: .55in .6in;
     }
+    /* keep the letter one full page so its blue footer bar sits at the bottom edge */
+    #offerSheet { padding: 0; min-height: 11in; }
     /* margin:0 removes the browser's auto URL/page-number header & footer;
        the page's own spacing is provided by .sheet padding above */
     @page { size: letter; margin: 0; }
@@ -321,6 +406,12 @@
 
   <!-- ============ FORM ============ -->
   <div class="panel">
+    <div class="mode-toggle">
+      <button type="button" data-mode="invoice" class="active">Invoice</button>
+      <button type="button" data-mode="offer">Offer Letter</button>
+    </div>
+
+    <div id="invoiceForm">
     <h1>Invoice Me</h1>
     <div class="subtitle">Code Ninjas Yorba Linda</div>
 
@@ -384,6 +475,71 @@
 
     <button class="btn btn-primary" id="printBtn">Save as PDF / Print</button>
     <div class="hint" style="margin-top:10px">In the print dialog choose “Save as PDF”.</div>
+    </div>
+
+    <!-- ============ OFFER LETTER FORM ============ -->
+    <div id="offerForm" hidden>
+    <h1>Offer Letter</h1>
+    <div class="subtitle">Code Ninjas Yorba Linda</div>
+
+    <div class="section">
+      <h2>Saved offer letters</h2>
+      <div class="school-toolbar">
+        <select id="olSaved">
+          <option value="">— Load a saved letter —</option>
+        </select>
+        <button class="btn btn-secondary btn-small" id="olSaveBtn" title="Save this letter to reuse later">Save</button>
+        <button class="btn btn-secondary btn-small" id="olDeleteBtn" title="Delete selected saved letter">✕</button>
+      </div>
+      <div class="hint">Save a filled-out letter and reload it to make a new one for someone else.</div>
+    </div>
+
+    <div class="section">
+      <h2>Employee</h2>
+      <label>Employee Name</label>
+      <input type="text" id="olName" placeholder="First Last">
+      <label>Position Title</label>
+      <input type="text" id="olTitle" placeholder="Code Sensei">
+    </div>
+
+    <div class="section">
+      <h2>Dates</h2>
+      <div class="row2">
+        <div><label>Letter Date</label><input type="date" id="olDate"></div>
+        <div><label>Accept By</label><input type="date" id="olDeadline"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Compensation</h2>
+      <div class="row2">
+        <div><label>Dojo Wage ($/hr)</label><input type="number" step="0.01" min="0" id="olDojoWage"></div>
+        <div><label>School Wage ($/hr)</label><input type="number" step="0.01" min="0" id="olSchoolWage"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Signature</h2>
+      <label>Signed By</label>
+      <input type="text" id="olSigner" placeholder="Sean Coon">
+      <label>Signer Title</label>
+      <input type="text" id="olSignerTitle" placeholder="Owner, Code Dojo LLC">
+      <label>Date Signed</label>
+      <input type="date" id="olSignDate">
+    </div>
+
+    <div class="section">
+      <h2>Letterhead</h2>
+      <label>Location Line</label>
+      <input type="text" id="olLocation" placeholder="Yorba Linda, CA">
+      <label>Footer Contact Line</label>
+      <input type="text" id="olFooter" placeholder="Code Ninjas, Yorba Linda, CA | address | phone">
+      <div class="hint">Shown in the blue bar at the bottom of the letter.</div>
+    </div>
+
+    <button class="btn btn-primary" id="olPrintBtn">Save as PDF / Print</button>
+    <div class="hint" style="margin-top:10px">In the print dialog choose “Save as PDF”.</div>
+    </div>
   </div>
 
   <!-- ============ PREVIEW ============ -->
@@ -438,6 +594,49 @@ Seal Beach, CA 90740
         <p class="note">IMPORTANT NOTE: The vendor's information (name, address, and pay to) must match the information for the W9 on file. If there are any changes to a vendor's information - a new W9 should be submitted and a copy must be included with the next invoice submission</p>
         <p class="thanks">THANK YOU FOR BEING A VALUED VENDOR!</p>
       </div>
+    </div>
+
+    <!-- ============ OFFER LETTER SHEET ============ -->
+    <div class="sheet" id="offerSheet" hidden>
+      <div class="ol-inner">
+        <div class="ol-logo">CODE <span>NINJAS</span></div>
+        <div class="ol-body">
+          <p id="oDate">Date</p>
+          <p id="oLocation">Yorba Linda, CA</p>
+          <p class="ol-dear">Dear <span id="oName">XXXXXX</span>,</p>
+          <p>We are pleased to offer you a part-time position at Code Dojo LLC, as a <span id="oTitle">Code Sensei</span>, contingent upon background check, NDA acceptance and I-9 verification. You will be reporting directly to the Center Director, at Code Ninjas, Yorba Linda. We believe your skills are a match for our requirements.</p>
+          <p>In this role, you will be required to:</p>
+          <ul>
+            <li>To learn Code Ninjas curriculum.</li>
+            <li>Provide center tours to prospective customers.</li>
+            <li>Create a positive and safe environment in which students can grow.</li>
+            <li>Evaluate student progress.</li>
+            <li>Provide feedback to parents after working with students.</li>
+            <li>Follow opening/closing duties daily which include maintaining corporate standards of cleanliness.</li>
+            <li>Report weekly to Center Director and Center Manager on progress.</li>
+            <li>Report daily to the Center Director and Center Manager with respect to day’s activities, efficiency &amp; productivity in dojo.</li>
+            <li>Work with Center Director and Center Manager on day-to-day basis to understand the expectations and complete all assigned tasks on-time and meet all set expectations with quality.</li>
+          </ul>
+          <p>Compensation for this position is <span id="oDojoWage">$16.50</span>/hour in the Dojo and <span id="oSchoolWage">$18</span>/hour in the schools to be paid on a twice a month basis either by direct deposit or by a check.</p>
+          <p>Your employment with Code Dojo LLC will be on an at-will basis, which means you and the company are free to terminate the employment relationship at any time for any reason. This letter is not a contract nor guarantee of employment for a definite amount of time.</p>
+          <p>Please confirm your acceptance of this offer by signing and returning this letter by <span id="oDeadline">______</span></p>
+          <p>We are excited to have you join our team! If you have any questions, please feel free to reach out at any time.</p>
+          <p>Sincerely,</p>
+          <div class="ol-sign-row">
+            <div>
+              <div class="ol-sign" id="oSigner">Sean Coon</div>
+              <div>(<span id="oSigner2">Sean Coon</span>)</div>
+              <div id="oSignerTitle">Owner, Code Dojo LLC</div>
+              <div>Date: <span id="oSignDate">______</span></div>
+            </div>
+            <div class="ol-sign-right">
+              <div>Signature:</div>
+              <div style="margin-top:24px">Date:</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ol-footer" id="oFooter">Code Ninjas, Yorba Linda, CA</div>
     </div>
   </div>
 </div>
@@ -698,8 +897,99 @@ Seal Beach, CA 90740
     document.title = fname ? fname.replace(/\.pdf$/, "") : "Invoice Me";
   }
 
+  /* ---------- Offer letter ---------- */
+  const OL_FIELDS = ["olName","olTitle","olDate","olDeadline","olDojoWage","olSchoolWage","olSigner","olSignerTitle","olSignDate","olLocation","olFooter"];
+  const olLong = v => v ? new Date(v + "T00:00:00").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "";
+  const olShort = v => { if (!v) return ""; const d = new Date(v + "T00:00:00"); return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`; };
+  const wageFmt = v => { const n = parseFloat(v); if (isNaN(n)) return ""; return Number.isInteger(n) ? "$" + n : "$" + n.toFixed(2); };
+
+  function renderOffer() {
+    const name = $("olName").value.trim();
+    $("oDate").textContent = olLong($("olDate").value) || "Date";
+    $("oLocation").textContent = $("olLocation").value.trim() || "Yorba Linda, CA";
+    $("oName").textContent = name || "XXXXXX";
+    $("oTitle").textContent = $("olTitle").value.trim() || "Code Sensei";
+    $("oDojoWage").textContent = wageFmt($("olDojoWage").value) || "$—";
+    $("oSchoolWage").textContent = wageFmt($("olSchoolWage").value) || "$—";
+    $("oDeadline").textContent = olShort($("olDeadline").value) || "______";
+    const signer = $("olSigner").value.trim() || "Sean Coon";
+    $("oSigner").textContent = signer;
+    $("oSigner2").textContent = signer;
+    $("oSignerTitle").textContent = $("olSignerTitle").value.trim() || "Owner, Code Dojo LLC";
+    $("oSignDate").textContent = olShort($("olSignDate").value) || "______";
+    $("oFooter").textContent = $("olFooter").value.trim() || "Code Ninjas, Yorba Linda, CA";
+
+    const fname = name ? `${name.replace(/\s+/g, "")}_OfferLetter.pdf` : "";
+    $("fileNameHint").textContent = fname ? "Suggested file name: " + fname : "";
+    document.title = fname ? fname.replace(/\.pdf$/, "") : "Offer Letter";
+  }
+  OL_FIELDS.forEach(id => $(id).addEventListener("input", renderOffer));
+
+  /* ---------- Saved offer letters ---------- */
+  function refreshOfferList() {
+    const offers = store.get("cn_offers", {});
+    const sel = $("olSaved");
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Load a saved letter —</option>';
+    Object.keys(offers).sort().forEach(n => {
+      const o = document.createElement("option");
+      o.value = o.textContent = n;
+      sel.appendChild(o);
+    });
+    sel.value = current;
+  }
+  $("olSaveBtn").addEventListener("click", () => {
+    const suggested = $("olSaved").value || $("olName").value.trim();
+    const name = (prompt("Save this offer letter as:", suggested) || "").trim();
+    if (!name) return;
+    const offers = store.get("cn_offers", {});
+    offers[name] = {};
+    OL_FIELDS.forEach(id => offers[name][id] = $(id).value);
+    store.set("cn_offers", offers);
+    refreshOfferList();
+    $("olSaved").value = name;
+  });
+  $("olDeleteBtn").addEventListener("click", () => {
+    const name = $("olSaved").value;
+    if (!name) return;
+    const offers = store.get("cn_offers", {});
+    delete offers[name];
+    store.set("cn_offers", offers);
+    refreshOfferList();
+  });
+  $("olSaved").addEventListener("change", e => {
+    const o = store.get("cn_offers", {})[e.target.value];
+    if (o) { OL_FIELDS.forEach(id => { if (id in o) $(id).value = o[id]; }); renderOffer(); }
+  });
+
+  /* ---------- Mode toggle ---------- */
+  function setMode(mode) {
+    const invoice = mode === "invoice";
+    $("invoiceForm").hidden = !invoice;
+    $("offerForm").hidden = invoice;
+    $("sheet").hidden = !invoice;
+    $("offerSheet").hidden = invoice;
+    document.querySelectorAll(".mode-toggle button").forEach(b =>
+      b.classList.toggle("active", b.dataset.mode === mode));
+    if (invoice) render(); else renderOffer();
+    fitSheet();
+  }
+  document.querySelectorAll(".mode-toggle button").forEach(b =>
+    b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+  /* ---------- Fit sheet to viewport ---------- */
+  const SHEET_W = 816; // 8.5in at 96dpi
+  function fitSheet() {
+    const wrap = document.querySelector(".preview-wrap");
+    const z = Math.min(1, wrap.clientWidth / SHEET_W);
+    $("sheet").style.setProperty("--sheet-zoom", z);
+    $("offerSheet").style.setProperty("--sheet-zoom", z);
+  }
+  window.addEventListener("resize", fitSheet);
+
   /* ---------- Print ---------- */
   $("printBtn").addEventListener("click", () => window.print());
+  $("olPrintBtn").addEventListener("click", () => window.print());
   $("addStudentBtn").addEventListener("click", () => { addStudent(); render(); });
   ["invDate", "billToName", "billToAddress", "billToEmail"].forEach(id =>
     $(id).addEventListener("input", render));
@@ -707,12 +997,25 @@ Seal Beach, CA 90740
 
   /* ---------- Init ---------- */
   const today = new Date();
-  $("invDate").value = today.toISOString().slice(0, 10);
+  const todayISO = today.toISOString().slice(0, 10);
+  $("invDate").value = todayISO;
   $("serviceMonth").value = MONTHS[today.getMonth()];
   addStudent();
   refreshSchoolList();
   refreshTemplateList();
+
+  // offer letter defaults
+  $("olDate").value = todayISO;
+  $("olSignDate").value = todayISO;
+  $("olDojoWage").value = "16.50";
+  $("olSchoolWage").value = "18";
+  $("olFooter").value = "Code Ninjas, Yorba Linda, CA";
+  refreshOfferList();
+  renderOffer();
+
+  // render invoice last so it owns the initial page title (invoice is the default mode)
   render();
+  fitSheet();
 })();
 </script>
 </body>
