@@ -1,0 +1,8 @@
+{
+  "name": "invoice-create",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@vercel/blob": "^2.1.0"
+  }
+}

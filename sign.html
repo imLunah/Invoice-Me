@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Offer Letter</title>
+<style>
+  :root {
+    --blue: #1f5fa8;
+    --canvas: #f6f6f4;
+    --card: #fff;
+    --line: #e7e7e4;
+    --text: #1c1c1c;
+    --muted: #8a8a8a;
+    --accent: #1f5fa8;
+    --accent-dark: #17497f;
+    --accent-tint: #eef4fb;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 10px 30px rgba(0,0,0,.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    color: var(--text);
+    background: var(--canvas);
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 12px 60px; }
+  .banner {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 14px 18px;
+    font-size: 14px;
+    margin-bottom: 18px;
+  }
+  .banner.signed { border-color: #bcd7bc; background: #f2f8f2; }
+
+  /* ---------- LETTER SHEET (mirrors the app's offer letter styles) ---------- */
+  .sheet {
+    background: #fff;
+    width: 8.5in;
+    min-height: 11in;
+    margin: 0 auto;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    zoom: var(--sheet-zoom, 1);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    color: #4a4a4a;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  .ol-inner { padding: .55in .65in 0; flex: 1 0 auto; }
+  .ol-logo {
+    text-align: right;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: .5px;
+    color: #1a1a1a;
+    margin-bottom: 34px;
+  }
+  .ol-logo span { color: var(--blue); }
+  .ol-logo img { height: 44px; width: auto; vertical-align: bottom; }
+  .ol-body p { margin-bottom: 12px; }
+  .ol-dear { margin-top: 2px; font-weight: 700; }
+  .ol-body ul { margin: 0 0 12px 22px; }
+  .ol-body li { margin-bottom: 3px; }
+  .ol-sign-row { display: flex; justify-content: space-between; margin-top: 6px; }
+  .ol-sign-row > div > div { margin-bottom: 5px; }
+  .ol-sign { font-size: 18px; font-weight: 700; color: var(--blue); }
+  .ol-sign-right { min-width: 2.1in; }
+  .ol-footer {
+    background: #3f7cb8;
+    color: #fff;
+    text-align: center;
+    padding: 13px 16px;
+    font-size: 11px;
+    margin-top: 34px;
+  }
+  .sig-img { display: block; height: 52px; margin: 2px 0 6px; }
+  .sig-typed { color: #4a4a4a; }
+
+  /* ---------- SIGN PANEL ---------- */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin: 22px auto 0;
+    max-width: 620px;
+  }
+  .panel h2 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .panel .sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 14px 0 5px; }
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
+  #pad {
+    width: 100%;
+    height: 160px;
+    border: 1px dashed #c9c9c4;
+    border-radius: 10px;
+    background: #fff;
+    touch-action: none;
+    cursor: crosshair;
+    display: block;
+  }
+  .pad-tools { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+  .pad-hint { font-size: 12px; color: var(--muted); }
+  .agree { display: flex; gap: 9px; align-items: flex-start; margin-top: 16px; font-size: 13px; line-height: 1.5; }
+  .agree input { margin-top: 2px; }
+  .btn {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    background: var(--card);
+    cursor: pointer;
+  }
+  .btn:hover { background: #f4f6f9; }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 18px;
+    padding: 13px;
+    font-size: 14px;
+  }
+  .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .btn-primary:disabled { opacity: .6; cursor: default; }
+  .err { color: #c00000; font-size: 13px; margin-top: 10px; display: none; }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 12px 8px 40px; }
+    .panel { padding: 18px 14px; }
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    body { background: #fff; }
+    .wrap { padding: 0; max-width: none; }
+    .banner, .panel { display: none !important; }
+    .sheet {
+      box-shadow: none;
+      border-radius: 0;
+      zoom: 1;
+      width: auto;
+      margin: 0;
+      min-height: 11in;
+    }
+    @page { size: letter; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="banner" id="banner">Loading letter…</div>
+
+  <div class="sheet" id="sheet" hidden>
+    <div id="letterHtml" style="display:flex;flex-direction:column;flex:1 0 auto"></div>
+    <div class="ol-footer" id="footerBar" hidden></div>
+  </div>
+
+  <div class="panel" id="signPanel" hidden>
+    <h2>Review &amp; sign</h2>
+    <div class="sub">Please read the letter above carefully. To accept this offer, complete the fields below.</div>
+
+    <label>Type your full legal name</label>
+    <input type="text" id="typedName" placeholder="First Last" autocomplete="name">
+
+    <label>Draw your signature</label>
+    <canvas id="pad"></canvas>
+    <div class="pad-tools">
+      <span class="pad-hint">Use your mouse or finger.</span>
+      <button type="button" class="btn" id="clearBtn">Clear</button>
+    </div>
+
+    <div class="agree">
+      <input type="checkbox" id="agree">
+      <label for="agree" style="margin:0;font-size:13px;color:var(--text)">I have read this offer letter, and by signing I accept the position and its terms.</label>
+    </div>
+
+    <button class="btn-primary btn" id="signBtn">Sign &amp; submit</button>
+    <div class="err" id="errMsg"></div>
+  </div>
+
+  <div class="panel" id="donePanel" hidden>
+    <h2>Signed ✓</h2>
+    <div class="sub" id="doneSub"></div>
+    <button class="btn-primary btn" onclick="window.print()">Save as PDF / Print</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const id = (location.hash || "").replace(/^#/, "");
+  const banner = $("banner");
+
+  if (!/^[a-f0-9]{32}$/.test(id)) {
+    banner.textContent = "This link is not valid. Please check that you copied the full link.";
+    return;
+  }
+
+  const fmtDate = iso => new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+  /* the letter HTML comes from storage; the create endpoint is unauthenticated,
+     so strip anything script-capable before rendering */
+  function sanitizeHtml(html) {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    doc.querySelectorAll("script,iframe,object,embed,link,meta,base,form,style").forEach(el => el.remove());
+    doc.querySelectorAll("*").forEach(el => {
+      [...el.attributes].forEach(a => {
+        const n = a.name.toLowerCase();
+        const v = a.value.trim().toLowerCase();
+        if (n.startsWith("on")) el.removeAttribute(a.name);
+        else if ((n === "href" || n === "src" || n === "xlink:href") && v.startsWith("javascript:")) el.removeAttribute(a.name);
+        else if (n === "src" && v.startsWith("data:") && !v.startsWith("data:image/")) el.removeAttribute(a.name);
+      });
+    });
+    return doc.body.innerHTML;
+  }
+
+  /* fit the 8.5in sheet to narrow screens */
+  const SHEET_W = 816;
+  function fitSheet() {
+    const z = Math.min(1, (document.querySelector(".wrap").clientWidth) / SHEET_W);
+    $("sheet").style.setProperty("--sheet-zoom", z);
+  }
+  window.addEventListener("resize", fitSheet);
+
+  function showSigned(rec) {
+    banner.className = "banner signed";
+    banner.textContent = `Signed by ${rec.typedName} on ${fmtDate(rec.signedAt)}.`;
+    // embed the signature in the letter's signature block; built with DOM APIs
+    // (not an HTML string) so stored values can't inject markup
+    let right = $("letterHtml").querySelector(".ol-sign-right");
+    if (!right) {
+      right = document.createElement("div");
+      right.className = "ol-sign-right";
+      $("letterHtml").appendChild(right);
+    }
+    right.textContent = "";
+    const lbl = document.createElement("div");
+    lbl.textContent = "Signature:";
+    const img = document.createElement("img");
+    img.className = "sig-img";
+    if (/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(rec.signature)) img.src = rec.signature;
+    img.alt = "Signature of " + rec.typedName;
+    const typed = document.createElement("div");
+    typed.className = "sig-typed";
+    typed.textContent = `(${rec.typedName})`;
+    const dt = document.createElement("div");
+    dt.textContent = "Date: " + new Date(rec.signedAt).toLocaleDateString("en-US");
+    right.append(lbl, img, typed, dt);
+    $("signPanel").hidden = true;
+    $("doneSub").textContent = `This offer letter was signed by ${rec.typedName} on ${fmtDate(rec.signedAt)}. You can save it as a PDF for your records.`;
+    $("donePanel").hidden = false;
+    document.title = `${rec.name.replace(/\s+/g, "")}_OfferLetter_Signed`;
+  }
+
+  /* ---------- signature pad ---------- */
+  let strokes = 0;
+  function initPad() {
+    const pad = $("pad");
+    const scale = window.devicePixelRatio || 1;
+    pad.width = pad.offsetWidth * scale;
+    pad.height = pad.offsetHeight * scale;
+    const ctx = pad.getContext("2d");
+    ctx.scale(scale, scale);
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#1c2b4a";
+    let drawing = false;
+    const pos = e => {
+      const r = pad.getBoundingClientRect();
+      return [e.clientX - r.left, e.clientY - r.top];
+    };
+    pad.addEventListener("pointerdown", e => {
+      drawing = true;
+      strokes++;
+      pad.setPointerCapture(e.pointerId);
+      const [x, y] = pos(e);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + .1, y + .1);
+      ctx.stroke();
+    });
+    pad.addEventListener("pointermove", e => {
+      if (!drawing) return;
+      const [x, y] = pos(e);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    });
+    ["pointerup", "pointercancel"].forEach(ev => pad.addEventListener(ev, () => { drawing = false; }));
+    $("clearBtn").addEventListener("click", () => {
+      ctx.clearRect(0, 0, pad.width, pad.height);
+      strokes = 0;
+    });
+  }
+
+  function fail(msg) {
+    const e = $("errMsg");
+    e.textContent = msg;
+    e.style.display = "block";
+  }
+
+  async function submit(rec) {
+    const typedName = $("typedName").value.trim();
+    $("errMsg").style.display = "none";
+    if (!typedName) return fail("Please type your full name.");
+    if (strokes === 0) return fail("Please draw your signature in the box.");
+    if (!$("agree").checked) return fail("Please check the box to confirm you accept the offer.");
+    const btn = $("signBtn");
+    btn.disabled = true;
+    btn.textContent = "Submitting…";
+    try {
+      const r = await fetch("/api/letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sign", id, typedName, signature: $("pad").toDataURL("image/png") })
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j.error || "submit failed");
+      }
+      const rec2 = await (await fetch(`/api/letter?id=${id}`)).json();
+      showSigned(rec2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = "Sign & submit";
+      fail("Could not submit: " + err.message + ". Please try again.");
+    }
+  }
+
+  /* ---------- load ---------- */
+  (async () => {
+    let rec;
+    try {
+      const r = await fetch(`/api/letter?id=${id}`);
+      if (r.status === 404) { banner.textContent = "This letter is no longer available."; return; }
+      if (!r.ok) throw new Error();
+      rec = await r.json();
+    } catch {
+      banner.textContent = "Could not load the letter. Please try again in a moment.";
+      return;
+    }
+    $("letterHtml").innerHTML = sanitizeHtml(rec.html);
+    if (rec.footer) { $("footerBar").textContent = rec.footer; $("footerBar").hidden = false; }
+    $("sheet").hidden = false;
+    fitSheet();
+    if (rec.status === "signed") {
+      showSigned(rec);
+    } else {
+      banner.textContent = `Hi${rec.name ? " " + rec.name : ""}! Please review your offer letter below, then sign at the bottom of the page.`;
+      $("signPanel").hidden = false;
+      initPad();
+      $("signBtn").addEventListener("click", () => submit(rec));
+      document.title = `${rec.name.replace(/\s+/g, "")}_OfferLetter`;
+    }
+  })();
+})();
+</script>
+</body>
+</html>
