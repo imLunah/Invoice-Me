@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 
 const PATH = id => `letters/${id}.json`;
 const ID_RE = /^[a-f0-9]{32}$/;
-const SIG_RE = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
+const FONTS = new Set(['dancing', 'vibes', 'sacramento', 'apple']);
 const badName = s => /[<>\x00-\x1f]/.test(s);
 
 async function readRecord(id) {
@@ -63,18 +63,19 @@ export default async function handler(req, res) {
         const id = String(body.id || '');
         if (!ID_RE.test(id)) return res.status(400).json({ error: 'bad id' });
         const typedName = String(body.typedName || '').trim().slice(0, 120);
-        const signature = String(body.signature || '');
+        const signatureText = String(body.signatureText || body.typedName || '').trim().slice(0, 120);
+        const signatureFont = String(body.signatureFont || '');
         if (!typedName || badName(typedName)) return res.status(400).json({ error: 'typed name required' });
-        if (!SIG_RE.test(signature) || signature.length > 300000) {
-          return res.status(400).json({ error: 'bad signature' });
-        }
+        if (!signatureText || badName(signatureText)) return res.status(400).json({ error: 'bad signature' });
+        if (!FONTS.has(signatureFont)) return res.status(400).json({ error: 'bad signature font' });
         const rec = await readRecord(id);
         if (!rec) return res.status(404).json({ error: 'not found' });
         if (rec.status === 'signed') return res.status(409).json({ error: 'already signed' });
         rec.status = 'signed';
         rec.signedAt = new Date().toISOString();
         rec.typedName = typedName;
-        rec.signature = signature;
+        rec.signatureText = signatureText;
+        rec.signatureFont = signatureFont;
         await writeRecord(id, rec);
         return res.status(200).json({ ok: true });
       }

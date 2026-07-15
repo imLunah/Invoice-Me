@@ -6,6 +6,10 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Offer Letter</title>
 <style>
+  @font-face { font-family: "SigDancing"; src: url("/fonts/dancing-script.woff2") format("woff2"); font-display: swap; }
+  @font-face { font-family: "SigVibes"; src: url("/fonts/great-vibes.woff2") format("woff2"); font-display: swap; }
+  @font-face { font-family: "SigSacramento"; src: url("/fonts/sacramento.woff2") format("woff2"); font-display: swap; }
+  @font-face { font-family: "SigApple"; src: url("/fonts/homemade-apple.woff2") format("woff2"); font-display: swap; }
   :root {
     --blue: #1f5fa8;
     --canvas: #f6f6f4;
@@ -80,8 +84,12 @@
     font-size: 11px;
     margin-top: 34px;
   }
-  .sig-img { display: block; height: 52px; margin: 2px 0 6px; }
+  .sig-script { font-size: 30px; line-height: 1.1; color: #1c2b4a; margin: 6px 0 4px; }
   .sig-typed { color: #4a4a4a; }
+  .font-dancing { font-family: "SigDancing", cursive; }
+  .font-vibes { font-family: "SigVibes", cursive; }
+  .font-sacramento { font-family: "SigSacramento", cursive; }
+  .font-apple { font-family: "SigApple", cursive; font-size: 22px; }
 
   /* ---------- SIGN PANEL ---------- */
   .panel {
@@ -105,18 +113,40 @@
     border-radius: 8px;
   }
   input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
-  #pad {
-    width: 100%;
-    height: 160px;
-    border: 1px dashed #c9c9c4;
+  .sig-preview {
+    border: 1px solid var(--line);
     border-radius: 10px;
-    background: #fff;
-    touch-action: none;
-    cursor: crosshair;
-    display: block;
+    background: #fbfbfa;
+    min-height: 92px;
+    display: flex;
+    align-items: center;
+    padding: 8px 18px;
+    overflow: hidden;
   }
-  .pad-tools { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
-  .pad-hint { font-size: 12px; color: var(--muted); }
+  .sig-preview .ink {
+    font-size: 38px;
+    line-height: 1.1;
+    color: #1c2b4a;
+    white-space: nowrap;
+  }
+  .sig-preview .placeholder { font-size: 13px; color: var(--muted); font-family: inherit; }
+  .font-choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+  .font-opt {
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--card);
+    padding: 8px 10px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 24px;
+    line-height: 1.15;
+    color: #1c2b4a;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .font-opt.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-tint); }
+  .font-opt .nm { display: block; font-family: -apple-system, sans-serif; font-size: 10px; color: var(--muted); margin-top: 2px; }
   .agree { display: flex; gap: 9px; align-items: flex-start; margin-top: 16px; font-size: 13px; line-height: 1.5; }
   .agree input { margin-top: 2px; }
   .btn {
@@ -182,12 +212,9 @@
     <label>Type your full legal name</label>
     <input type="text" id="typedName" placeholder="First Last" autocomplete="name">
 
-    <label>Draw your signature</label>
-    <canvas id="pad"></canvas>
-    <div class="pad-tools">
-      <span class="pad-hint">Use your mouse or finger.</span>
-      <button type="button" class="btn" id="clearBtn">Clear</button>
-    </div>
+    <label>Your signature</label>
+    <div class="sig-preview"><span class="ink" id="sigInk"><span class="placeholder">Type your name above to see your signature</span></span></div>
+    <div class="font-choices" id="fontChoices"></div>
 
     <div class="agree">
       <input type="checkbox" id="agree">
@@ -210,6 +237,10 @@
   const $ = id => document.getElementById(id);
   const id = (location.hash || "").replace(/^#/, "");
   const banner = $("banner");
+
+  // opening a different letter link in the same tab only changes the hash;
+  // reload so the new letter is fetched and rendered from scratch
+  window.addEventListener("hashchange", () => location.reload());
 
   if (!/^[a-f0-9]{32}$/.test(id)) {
     banner.textContent = "This link is not valid. Please check that you copied the full link.";
@@ -243,6 +274,17 @@
   }
   window.addEventListener("resize", fitSheet);
 
+  /* signature fonts — keys are stored on the record; the app and server share
+     this allowlist so only known font classes are ever applied */
+  const FONTS = [
+    { key: "dancing", cls: "font-dancing", label: "Dancing" },
+    { key: "vibes", cls: "font-vibes", label: "Elegant" },
+    { key: "sacramento", cls: "font-sacramento", label: "Casual" },
+    { key: "apple", cls: "font-apple", label: "Handwritten" }
+  ];
+  const fontClass = key => (FONTS.find(f => f.key === key) || FONTS[0]).cls;
+  let chosenFont = FONTS[0].key;
+
   function showSigned(rec) {
     banner.className = "banner signed";
     banner.textContent = `Signed by ${rec.typedName} on ${fmtDate(rec.signedAt)}.`;
@@ -257,61 +299,55 @@
     right.textContent = "";
     const lbl = document.createElement("div");
     lbl.textContent = "Signature:";
-    const img = document.createElement("img");
-    img.className = "sig-img";
-    if (/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(rec.signature)) img.src = rec.signature;
-    img.alt = "Signature of " + rec.typedName;
+    const sig = document.createElement("div");
+    sig.className = "sig-script " + fontClass(rec.signatureFont);
+    sig.textContent = rec.signatureText || rec.typedName;
     const typed = document.createElement("div");
     typed.className = "sig-typed";
     typed.textContent = `(${rec.typedName})`;
     const dt = document.createElement("div");
     dt.textContent = "Date: " + new Date(rec.signedAt).toLocaleDateString("en-US");
-    right.append(lbl, img, typed, dt);
+    right.append(lbl, sig, typed, dt);
     $("signPanel").hidden = true;
     $("doneSub").textContent = `This offer letter was signed by ${rec.typedName} on ${fmtDate(rec.signedAt)}. You can save it as a PDF for your records.`;
     $("donePanel").hidden = false;
     document.title = `${rec.name.replace(/\s+/g, "")}_OfferLetter_Signed`;
   }
 
-  /* ---------- signature pad ---------- */
-  let strokes = 0;
-  function initPad() {
-    const pad = $("pad");
-    const scale = window.devicePixelRatio || 1;
-    pad.width = pad.offsetWidth * scale;
-    pad.height = pad.offsetHeight * scale;
-    const ctx = pad.getContext("2d");
-    ctx.scale(scale, scale);
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#1c2b4a";
-    let drawing = false;
-    const pos = e => {
-      const r = pad.getBoundingClientRect();
-      return [e.clientX - r.left, e.clientY - r.top];
-    };
-    pad.addEventListener("pointerdown", e => {
-      drawing = true;
-      strokes++;
-      pad.setPointerCapture(e.pointerId);
-      const [x, y] = pos(e);
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + .1, y + .1);
-      ctx.stroke();
+  /* ---------- signature font picker + live preview ---------- */
+  function updatePreview() {
+    const name = $("typedName").value.trim();
+    const ink = $("sigInk");
+    ink.className = "ink " + fontClass(chosenFont);
+    if (name) ink.textContent = name;
+    else ink.innerHTML = '<span class="placeholder">Type your name above to see your signature</span>';
+    // reflect the typed name in each font choice tile
+    document.querySelectorAll(".font-opt").forEach(opt => {
+      opt.firstChild.textContent = name || opt.dataset.label;
     });
-    pad.addEventListener("pointermove", e => {
-      if (!drawing) return;
-      const [x, y] = pos(e);
-      ctx.lineTo(x, y);
-      ctx.stroke();
+  }
+  function initFontPicker() {
+    const wrap = $("fontChoices");
+    FONTS.forEach(f => {
+      const opt = document.createElement("button");
+      opt.type = "button";
+      opt.className = "font-opt " + f.cls + (f.key === chosenFont ? " active" : "");
+      opt.dataset.label = f.label;
+      const txt = document.createTextNode(f.label);
+      const nm = document.createElement("span");
+      nm.className = "nm";
+      nm.textContent = f.label;
+      opt.append(txt, nm);
+      opt.addEventListener("click", () => {
+        chosenFont = f.key;
+        document.querySelectorAll(".font-opt").forEach(o => o.classList.remove("active"));
+        opt.classList.add("active");
+        updatePreview();
+      });
+      wrap.appendChild(opt);
     });
-    ["pointerup", "pointercancel"].forEach(ev => pad.addEventListener(ev, () => { drawing = false; }));
-    $("clearBtn").addEventListener("click", () => {
-      ctx.clearRect(0, 0, pad.width, pad.height);
-      strokes = 0;
-    });
+    $("typedName").addEventListener("input", updatePreview);
+    updatePreview();
   }
 
   function fail(msg) {
@@ -324,7 +360,6 @@
     const typedName = $("typedName").value.trim();
     $("errMsg").style.display = "none";
     if (!typedName) return fail("Please type your full name.");
-    if (strokes === 0) return fail("Please draw your signature in the box.");
     if (!$("agree").checked) return fail("Please check the box to confirm you accept the offer.");
     const btn = $("signBtn");
     btn.disabled = true;
@@ -333,7 +368,7 @@
       const r = await fetch("/api/letter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sign", id, typedName, signature: $("pad").toDataURL("image/png") })
+        body: JSON.stringify({ action: "sign", id, typedName, signatureText: typedName, signatureFont: chosenFont })
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
@@ -370,7 +405,7 @@
     } else {
       banner.textContent = `Hi${rec.name ? " " + rec.name : ""}! Please review your offer letter below, then sign at the bottom of the page.`;
       $("signPanel").hidden = false;
-      initPad();
+      initFontPicker();
       $("signBtn").addEventListener("click", () => submit(rec));
       document.title = `${rec.name.replace(/\s+/g, "")}_OfferLetter`;
     }
