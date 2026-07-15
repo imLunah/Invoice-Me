@@ -6,12 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Offer Letter</title>
 <style>
-  @font-face { font-family: "SigDafoe"; src: url("/fonts/mr-dafoe.woff2") format("woff2"); font-display: swap; }
   @font-face { font-family: "SigBrush"; src: url("/fonts/alex-brush.woff2") format("woff2"); font-display: swap; }
-  @font-face { font-family: "SigDancing"; src: url("/fonts/dancing-script.woff2") format("woff2"); font-display: swap; }
-  @font-face { font-family: "SigZeyada"; src: url("/fonts/zeyada.woff2") format("woff2"); font-display: swap; }
-  @font-face { font-family: "SigApple"; src: url("/fonts/homemade-apple.woff2") format("woff2"); font-display: swap; }
-  @font-face { font-family: "SigRock"; src: url("/fonts/rock-salt.woff2") format("woff2"); font-display: swap; }
   :root {
     --blue: #1f5fa8;
     --canvas: #f6f6f4;
@@ -86,16 +81,8 @@
     font-size: 11px;
     margin-top: 34px;
   }
-  .sig-script { --sz: 30px; font-size: calc(var(--sz) * var(--scale, 1)); line-height: 1.15; color: #1c2b4a; margin: 4px 0; }
+  .sig-script { font-size: 29px; line-height: 1.15; color: #1c2b4a; margin: 4px 0; font-family: "SigBrush", cursive; }
   .sig-typed { color: #4a4a4a; }
-  /* each font sets a --scale so different fonts render at a similar visual size
-     in every context (letter, preview, tiles); the context sets the base --sz */
-  .font-dafoe   { --scale: 1;    font-family: "SigDafoe", cursive; }
-  .font-brush   { --scale: .98;  font-family: "SigBrush", cursive; }
-  .font-dancing { --scale: .9;   font-family: "SigDancing", cursive; }
-  .font-zeyada  { --scale: 1.28; font-family: "SigZeyada", cursive; }
-  .font-apple   { --scale: .6;   font-family: "SigApple", cursive; }
-  .font-rock    { --scale: .5;   font-family: "SigRock", cursive; }
 
   /* ---------- SIGN PANEL ---------- */
   .panel {
@@ -150,10 +137,10 @@
     border-bottom: 1px solid #e6e6e0;
   }
   .sig-preview .ink {
-    --sz: 46px;
     position: relative;
     z-index: 1;
-    font-size: calc(var(--sz) * var(--scale, 1));
+    font-family: "SigBrush", cursive;
+    font-size: 45px;
     line-height: 1;
     color: #1c2b4a;
     white-space: nowrap;
@@ -161,50 +148,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .sig-preview .placeholder { font-size: 13.5px; color: var(--muted); font-family: inherit; }
-
-  .font-choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .font-opt {
-    position: relative;
-    height: 66px;
-    border: 1.5px solid var(--line);
-    border-radius: 12px;
-    background: var(--card);
-    padding: 6px 30px 6px 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    transition: border-color .12s, box-shadow .12s, background .12s;
-  }
-  .font-opt:hover { border-color: #cfd8e6; background: #fcfdff; }
-  .font-opt.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); background: #fcfdff; }
-  .font-opt .tile-sig {
-    --sz: 27px;
-    font-size: calc(var(--sz) * var(--scale, 1));
-    line-height: 1;
-    color: #1c2b4a;
-    white-space: nowrap;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .font-opt .tile-check {
-    position: absolute;
-    top: 7px; right: 8px;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #fff;
-    font-size: 11px;
-    line-height: 18px;
-    text-align: center;
-    opacity: 0;
-    transform: scale(.5);
-    transition: opacity .12s, transform .12s;
-  }
-  .font-opt.active .tile-check { opacity: 1; transform: scale(1); }
+  .sig-preview .placeholder { font-family: inherit; font-size: 13.5px; color: var(--muted); }
 
   .agree {
     display: flex;
@@ -289,11 +233,6 @@
       <div class="sig-preview"><span class="ink" id="sigInk"><span class="placeholder">Type your name above to preview your signature</span></span></div>
     </div>
 
-    <div class="field">
-      <label class="field-label">Signature style</label>
-      <div class="font-choices" id="fontChoices"></div>
-    </div>
-
     <div class="agree">
       <input type="checkbox" id="agree">
       <label for="agree" style="margin:0;color:var(--text)">I have read this offer letter, and by signing I accept the position and its terms.</label>
@@ -352,18 +291,8 @@
   }
   window.addEventListener("resize", fitSheet);
 
-  /* signature fonts — keys are stored on the record; the app and server share
-     this allowlist so only known font classes are ever applied */
-  const FONTS = [
-    { key: "dafoe", cls: "font-dafoe", label: "Classic" },
-    { key: "brush", cls: "font-brush", label: "Flowing" },
-    { key: "dancing", cls: "font-dancing", label: "Script" },
-    { key: "zeyada", cls: "font-zeyada", label: "Natural" },
-    { key: "apple", cls: "font-apple", label: "Print" },
-    { key: "rock", cls: "font-rock", label: "Marker" }
-  ];
-  const fontClass = key => (FONTS.find(f => f.key === key) || FONTS[0]).cls;
-  let chosenFont = FONTS[0].key;
+  // single signature font; the server allowlist must include this key
+  const SIGN_FONT = "brush";
 
   function showSigned(rec) {
     banner.className = "banner signed";
@@ -380,7 +309,7 @@
     const lbl = document.createElement("div");
     lbl.textContent = "Signature:";
     const sig = document.createElement("div");
-    sig.className = "sig-script " + fontClass(rec.signatureFont);
+    sig.className = "sig-script";
     sig.textContent = rec.signatureText || rec.typedName;
     const typed = document.createElement("div");
     typed.className = "sig-typed";
@@ -394,43 +323,12 @@
     document.title = `${rec.name.replace(/\s+/g, "")}_OfferLetter_Signed`;
   }
 
-  /* ---------- signature font picker + live preview ---------- */
+  /* ---------- live signature preview ---------- */
   function updatePreview() {
     const name = $("typedName").value.trim();
     const ink = $("sigInk");
-    ink.className = "ink " + fontClass(chosenFont);
     if (name) ink.textContent = name;
     else ink.innerHTML = '<span class="placeholder">Type your name above to preview your signature</span>';
-    // show the typed name (or the style label as a sample) in each tile
-    document.querySelectorAll(".font-opt .tile-sig").forEach(sig => {
-      sig.textContent = name || sig.dataset.label;
-    });
-  }
-  function initFontPicker() {
-    const wrap = $("fontChoices");
-    FONTS.forEach(f => {
-      const opt = document.createElement("button");
-      opt.type = "button";
-      opt.className = "font-opt" + (f.key === chosenFont ? " active" : "");
-      opt.setAttribute("aria-label", "Signature style: " + f.label);
-      const sig = document.createElement("span");
-      sig.className = "tile-sig " + f.cls;
-      sig.dataset.label = f.label;
-      sig.textContent = f.label;
-      const chk = document.createElement("span");
-      chk.className = "tile-check";
-      chk.textContent = "✓";
-      opt.append(sig, chk);
-      opt.addEventListener("click", () => {
-        chosenFont = f.key;
-        document.querySelectorAll(".font-opt").forEach(o => o.classList.remove("active"));
-        opt.classList.add("active");
-        updatePreview();
-      });
-      wrap.appendChild(opt);
-    });
-    $("typedName").addEventListener("input", updatePreview);
-    updatePreview();
   }
 
   function fail(msg) {
@@ -451,7 +349,7 @@
       const r = await fetch("/api/letter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sign", id, typedName, signatureText: typedName, signatureFont: chosenFont })
+        body: JSON.stringify({ action: "sign", id, typedName, signatureText: typedName, signatureFont: SIGN_FONT })
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
@@ -488,7 +386,8 @@
     } else {
       banner.textContent = `Hi${rec.name ? " " + rec.name : ""}! Please review your offer letter below, then sign at the bottom of the page.`;
       $("signPanel").hidden = false;
-      initFontPicker();
+      $("typedName").addEventListener("input", updatePreview);
+      updatePreview();
       $("signBtn").addEventListener("click", () => submit(rec));
       document.title = `${rec.name.replace(/\s+/g, "")}_OfferLetter`;
     }

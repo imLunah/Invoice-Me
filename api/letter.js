@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 
 const PATH = id => `letters/${id}.json`;
 const ID_RE = /^[a-f0-9]{32}$/;
-const FONTS = new Set(['dafoe', 'brush', 'dancing', 'zeyada', 'apple', 'rock']);
+const FONTS = new Set(['brush']);
 const badName = s => /[<>\x00-\x1f]/.test(s);
 
 async function readRecord(id) {
