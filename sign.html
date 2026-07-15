@@ -6,10 +6,12 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Offer Letter</title>
 <style>
+  @font-face { font-family: "SigDafoe"; src: url("/fonts/mr-dafoe.woff2") format("woff2"); font-display: swap; }
+  @font-face { font-family: "SigBrush"; src: url("/fonts/alex-brush.woff2") format("woff2"); font-display: swap; }
   @font-face { font-family: "SigDancing"; src: url("/fonts/dancing-script.woff2") format("woff2"); font-display: swap; }
-  @font-face { font-family: "SigVibes"; src: url("/fonts/great-vibes.woff2") format("woff2"); font-display: swap; }
-  @font-face { font-family: "SigSacramento"; src: url("/fonts/sacramento.woff2") format("woff2"); font-display: swap; }
+  @font-face { font-family: "SigZeyada"; src: url("/fonts/zeyada.woff2") format("woff2"); font-display: swap; }
   @font-face { font-family: "SigApple"; src: url("/fonts/homemade-apple.woff2") format("woff2"); font-display: swap; }
+  @font-face { font-family: "SigRock"; src: url("/fonts/rock-salt.woff2") format("woff2"); font-display: swap; }
   :root {
     --blue: #1f5fa8;
     --canvas: #f6f6f4;
@@ -84,12 +86,16 @@
     font-size: 11px;
     margin-top: 34px;
   }
-  .sig-script { font-size: 30px; line-height: 1.1; color: #1c2b4a; margin: 6px 0 4px; }
+  .sig-script { --sz: 30px; font-size: calc(var(--sz) * var(--scale, 1)); line-height: 1.15; color: #1c2b4a; margin: 4px 0; }
   .sig-typed { color: #4a4a4a; }
-  .font-dancing { font-family: "SigDancing", cursive; }
-  .font-vibes { font-family: "SigVibes", cursive; }
-  .font-sacramento { font-family: "SigSacramento", cursive; }
-  .font-apple { font-family: "SigApple", cursive; font-size: 22px; }
+  /* each font sets a --scale so different fonts render at a similar visual size
+     in every context (letter, preview, tiles); the context sets the base --sz */
+  .font-dafoe   { --scale: 1;    font-family: "SigDafoe", cursive; }
+  .font-brush   { --scale: .98;  font-family: "SigBrush", cursive; }
+  .font-dancing { --scale: .9;   font-family: "SigDancing", cursive; }
+  .font-zeyada  { --scale: 1.28; font-family: "SigZeyada", cursive; }
+  .font-apple   { --scale: .6;   font-family: "SigApple", cursive; }
+  .font-rock    { --scale: .5;   font-family: "SigRock", cursive; }
 
   /* ---------- SIGN PANEL ---------- */
   .panel {
@@ -101,54 +107,117 @@
     margin: 22px auto 0;
     max-width: 620px;
   }
-  .panel h2 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
-  .panel .sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
-  label { display: block; font-size: 12px; color: var(--muted); margin: 14px 0 5px; }
+  .panel h2 { font-size: 19px; font-weight: 650; letter-spacing: -.01em; }
+  .panel .sub { font-size: 13.5px; color: var(--muted); margin: 5px 0 4px; line-height: 1.5; }
+  .field { margin-top: 20px; }
+  .field-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
   input[type="text"] {
     width: 100%;
-    padding: 10px;
+    padding: 11px 13px;
     font-size: 16px;
     font-family: inherit;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-  }
-  input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
-  .sig-preview {
+    color: var(--text);
+    background: var(--card);
     border: 1px solid var(--line);
     border-radius: 10px;
-    background: #fbfbfa;
-    min-height: 92px;
+  }
+  input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
+
+  .sig-preview {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fbfbf9;
+    height: 120px;
     display: flex;
     align-items: center;
-    padding: 8px 18px;
+    justify-content: center;
+    padding: 10px 22px;
     overflow: hidden;
+  }
+  .sig-preview::after {
+    content: "";
+    position: absolute;
+    left: 22px; right: 22px; bottom: 32px;
+    border-bottom: 1px solid #e6e6e0;
   }
   .sig-preview .ink {
-    font-size: 38px;
-    line-height: 1.1;
+    --sz: 46px;
+    position: relative;
+    z-index: 1;
+    font-size: calc(var(--sz) * var(--scale, 1));
+    line-height: 1;
     color: #1c2b4a;
     white-space: nowrap;
-  }
-  .sig-preview .placeholder { font-size: 13px; color: var(--muted); font-family: inherit; }
-  .font-choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
-  .font-opt {
-    border: 1px solid var(--line);
-    border-radius: 9px;
-    background: var(--card);
-    padding: 8px 10px;
-    cursor: pointer;
-    text-align: center;
-    font-size: 24px;
-    line-height: 1.15;
-    color: #1c2b4a;
+    max-width: 100%;
     overflow: hidden;
-    white-space: nowrap;
     text-overflow: ellipsis;
   }
-  .font-opt.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-tint); }
-  .font-opt .nm { display: block; font-family: -apple-system, sans-serif; font-size: 10px; color: var(--muted); margin-top: 2px; }
-  .agree { display: flex; gap: 9px; align-items: flex-start; margin-top: 16px; font-size: 13px; line-height: 1.5; }
-  .agree input { margin-top: 2px; }
+  .sig-preview .placeholder { font-size: 13.5px; color: var(--muted); font-family: inherit; }
+
+  .font-choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .font-opt {
+    position: relative;
+    height: 66px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    background: var(--card);
+    padding: 6px 30px 6px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: border-color .12s, box-shadow .12s, background .12s;
+  }
+  .font-opt:hover { border-color: #cfd8e6; background: #fcfdff; }
+  .font-opt.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); background: #fcfdff; }
+  .font-opt .tile-sig {
+    --sz: 27px;
+    font-size: calc(var(--sz) * var(--scale, 1));
+    line-height: 1;
+    color: #1c2b4a;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .font-opt .tile-check {
+    position: absolute;
+    top: 7px; right: 8px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    opacity: 0;
+    transform: scale(.5);
+    transition: opacity .12s, transform .12s;
+  }
+  .font-opt.active .tile-check { opacity: 1; transform: scale(1); }
+
+  .agree {
+    display: flex;
+    gap: 11px;
+    align-items: flex-start;
+    margin-top: 22px;
+    padding: 13px 15px;
+    background: var(--canvas);
+    border-radius: 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .agree input { margin-top: 1px; width: 17px; height: 17px; accent-color: var(--accent); flex-shrink: 0; }
   .btn {
     border: 1px solid var(--line);
     border-radius: 10px;
@@ -166,9 +235,10 @@
     color: #fff;
     font-weight: 600;
     width: 100%;
-    margin-top: 18px;
-    padding: 13px;
-    font-size: 14px;
+    margin-top: 20px;
+    padding: 14px;
+    font-size: 15px;
+    border-radius: 11px;
   }
   .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
   .btn-primary:disabled { opacity: .6; cursor: default; }
@@ -207,18 +277,26 @@
 
   <div class="panel" id="signPanel" hidden>
     <h2>Review &amp; sign</h2>
-    <div class="sub">Please read the letter above carefully. To accept this offer, complete the fields below.</div>
+    <div class="sub">Read the letter above, then create your signature to accept the offer.</div>
 
-    <label>Type your full legal name</label>
-    <input type="text" id="typedName" placeholder="First Last" autocomplete="name">
+    <div class="field">
+      <label class="field-label" for="typedName">Your full legal name</label>
+      <input type="text" id="typedName" placeholder="First Last" autocomplete="name">
+    </div>
 
-    <label>Your signature</label>
-    <div class="sig-preview"><span class="ink" id="sigInk"><span class="placeholder">Type your name above to see your signature</span></span></div>
-    <div class="font-choices" id="fontChoices"></div>
+    <div class="field">
+      <label class="field-label">Your signature</label>
+      <div class="sig-preview"><span class="ink" id="sigInk"><span class="placeholder">Type your name above to preview your signature</span></span></div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Signature style</label>
+      <div class="font-choices" id="fontChoices"></div>
+    </div>
 
     <div class="agree">
       <input type="checkbox" id="agree">
-      <label for="agree" style="margin:0;font-size:13px;color:var(--text)">I have read this offer letter, and by signing I accept the position and its terms.</label>
+      <label for="agree" style="margin:0;color:var(--text)">I have read this offer letter, and by signing I accept the position and its terms.</label>
     </div>
 
     <button class="btn-primary btn" id="signBtn">Sign &amp; submit</button>
@@ -277,10 +355,12 @@
   /* signature fonts — keys are stored on the record; the app and server share
      this allowlist so only known font classes are ever applied */
   const FONTS = [
-    { key: "dancing", cls: "font-dancing", label: "Dancing" },
-    { key: "vibes", cls: "font-vibes", label: "Elegant" },
-    { key: "sacramento", cls: "font-sacramento", label: "Casual" },
-    { key: "apple", cls: "font-apple", label: "Handwritten" }
+    { key: "dafoe", cls: "font-dafoe", label: "Classic" },
+    { key: "brush", cls: "font-brush", label: "Flowing" },
+    { key: "dancing", cls: "font-dancing", label: "Script" },
+    { key: "zeyada", cls: "font-zeyada", label: "Natural" },
+    { key: "apple", cls: "font-apple", label: "Print" },
+    { key: "rock", cls: "font-rock", label: "Marker" }
   ];
   const fontClass = key => (FONTS.find(f => f.key === key) || FONTS[0]).cls;
   let chosenFont = FONTS[0].key;
@@ -320,10 +400,10 @@
     const ink = $("sigInk");
     ink.className = "ink " + fontClass(chosenFont);
     if (name) ink.textContent = name;
-    else ink.innerHTML = '<span class="placeholder">Type your name above to see your signature</span>';
-    // reflect the typed name in each font choice tile
-    document.querySelectorAll(".font-opt").forEach(opt => {
-      opt.firstChild.textContent = name || opt.dataset.label;
+    else ink.innerHTML = '<span class="placeholder">Type your name above to preview your signature</span>';
+    // show the typed name (or the style label as a sample) in each tile
+    document.querySelectorAll(".font-opt .tile-sig").forEach(sig => {
+      sig.textContent = name || sig.dataset.label;
     });
   }
   function initFontPicker() {
@@ -331,13 +411,16 @@
     FONTS.forEach(f => {
       const opt = document.createElement("button");
       opt.type = "button";
-      opt.className = "font-opt " + f.cls + (f.key === chosenFont ? " active" : "");
-      opt.dataset.label = f.label;
-      const txt = document.createTextNode(f.label);
-      const nm = document.createElement("span");
-      nm.className = "nm";
-      nm.textContent = f.label;
-      opt.append(txt, nm);
+      opt.className = "font-opt" + (f.key === chosenFont ? " active" : "");
+      opt.setAttribute("aria-label", "Signature style: " + f.label);
+      const sig = document.createElement("span");
+      sig.className = "tile-sig " + f.cls;
+      sig.dataset.label = f.label;
+      sig.textContent = f.label;
+      const chk = document.createElement("span");
+      chk.className = "tile-check";
+      chk.textContent = "✓";
+      opt.append(sig, chk);
       opt.addEventListener("click", () => {
         chosenFont = f.key;
         document.querySelectorAll(".font-opt").forEach(o => o.classList.remove("active"));
