@@ -369,45 +369,6 @@
     color: var(--blue);
   }
   .ol-sign-right { min-width: 2.1in; }
-  /* ---------- SENT LETTERS LIST ---------- */
-  .sent-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 9px 11px;
-    margin-top: 8px;
-    font-size: 12px;
-  }
-  .sent-row .who { flex: 1; min-width: 0; }
-  .sent-row .who .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sent-row .who .dt { color: var(--muted); font-size: 11px; }
-  .sent-chip {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 20px;
-    background: #f4f1e4;
-    color: #8a7a2a;
-    white-space: nowrap;
-  }
-  .sent-chip.signed { background: #e8f4e8; color: #2e7d32; }
-  .sent-chip.gone { background: #f4e8e8; color: var(--red); }
-  .sent-row button {
-    border: none;
-    background: none;
-    color: var(--accent);
-    font-size: 12px;
-    font-weight: 500;
-    font-family: inherit;
-    cursor: pointer;
-    padding: 3px 4px;
-  }
-  .sent-row button:hover { text-decoration: underline; }
-  .sent-row button.rm { color: var(--muted); }
-  .sent-row button.rm:hover { color: var(--red); text-decoration: none; }
-
   .ol-footer {
     background: #3f7cb8;
     color: #fff;
@@ -520,7 +481,16 @@
     <!-- ============ OFFER LETTER FORM ============ -->
     <div id="offerForm" hidden>
     <h1>Offer Letter</h1>
-    <div class="subtitle">Code Ninjas Yorba Linda</div>
+    <div class="subtitle">Code Dojo LLC</div>
+
+    <div class="section">
+      <h2>Letter type</h2>
+      <select id="olType">
+        <option value="sensei">Code Sensei</option>
+        <option value="director">Center Director</option>
+      </select>
+      <div class="hint">Switches the duties and compensation to match the role.</div>
+    </div>
 
     <div class="section">
       <h2>Saved offer letters</h2>
@@ -552,9 +522,13 @@
 
     <div class="section">
       <h2>Compensation</h2>
-      <div class="row2">
+      <div class="row2" id="compSensei">
         <div><label>Dojo Wage ($/hr)</label><input type="number" step="0.01" min="0" id="olDojoWage"></div>
         <div><label>School Wage ($/hr)</label><input type="number" step="0.01" min="0" id="olSchoolWage"></div>
+      </div>
+      <div id="compDirector" hidden>
+        <label>Wage ($/hr)</label>
+        <input type="number" step="0.01" min="0" id="olWage">
       </div>
     </div>
 
@@ -594,12 +568,6 @@
         </div>
         <div class="hint">Added centers are saved on this device and appear in the dropdown above.</div>
       </div>
-    </div>
-
-    <div class="section">
-      <h2>Send for signature</h2>
-      <button type="button" class="btn btn-secondary btn-small" id="olSendBtn" style="width:100%">Create signing link for this letter</button>
-      <div id="sentList"></div>
     </div>
 
     <button class="btn btn-primary" id="olPrintBtn">Save as PDF / Print</button>
@@ -669,20 +637,10 @@ Seal Beach, CA 90740
           <p id="oDate">Date</p>
           <p id="oLocation">Yorba Linda, CA</p>
           <p class="ol-dear">Dear <span id="oName">XXXXXX</span>,</p>
-          <p>We are pleased to offer you a part-time position at Code Dojo LLC, as a <span id="oTitle">Code Sensei</span>, contingent upon background check, NDA acceptance and I-9 verification. You will be reporting directly to the Center Director, at <span id="oCenter">Code Ninjas, Yorba Linda, CA</span>. We believe your skills are a match for our requirements.</p>
+          <p id="oIntro"></p>
           <p>In this role, you will be required to:</p>
-          <ul>
-            <li>To learn Code Ninjas curriculum.</li>
-            <li>Provide center tours to prospective customers.</li>
-            <li>Create a positive and safe environment in which students can grow.</li>
-            <li>Evaluate student progress.</li>
-            <li>Provide feedback to parents after working with students.</li>
-            <li>Follow opening/closing duties daily which include maintaining corporate standards of cleanliness.</li>
-            <li>Report weekly to Center Director and Center Manager on progress.</li>
-            <li>Report daily to the Center Director and Center Manager with respect to day’s activities, efficiency &amp; productivity in dojo.</li>
-            <li>Work with Center Director and Center Manager on day-to-day basis to understand the expectations and complete all assigned tasks on-time and meet all set expectations with quality.</li>
-          </ul>
-          <p>Compensation for this position is <span id="oDojoWage">$16.50</span>/hour in the Dojo and <span id="oSchoolWage">$18</span>/hour in the schools to be paid on a twice a month basis either by direct deposit or by a check.</p>
+          <ul id="oDuties"></ul>
+          <p id="oComp">Compensation for this position is <span id="oDojoWage">$16.50</span>/hour in the Dojo and <span id="oSchoolWage">$18</span>/hour in the schools to be paid on a twice a month basis either by direct deposit or by a check.</p>
           <p>Your employment with Code Dojo LLC will be on an at-will basis, which means you and the company are free to terminate the employment relationship at any time for any reason. This letter is not a contract nor guarantee of employment for a definite amount of time.</p>
           <p>Please confirm your acceptance of this offer by signing and returning this letter by <span id="oDeadline">______</span></p>
           <p>We are excited to have you join our team! If you have any questions, please feel free to reach out at any time.</p>
@@ -963,134 +921,96 @@ Seal Beach, CA 90740
   }
 
   /* ---------- Offer letter ---------- */
-  const OL_FIELDS = ["olName","olTitle","olDate","olDeadline","olDojoWage","olSchoolWage","olSigner","olSignerTitle","olSignDate","olLocation","olFooter"];
+  const OL_FIELDS = ["olType","olName","olTitle","olDate","olDeadline","olDojoWage","olSchoolWage","olWage","olSigner","olSignerTitle","olSignDate","olLocation","olFooter"];
   const olLong = v => v ? new Date(v + "T00:00:00").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "";
   const olShort = v => { if (!v) return ""; const d = new Date(v + "T00:00:00"); return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`; };
   const wageFmt = v => { const n = parseFloat(v); if (isNaN(n)) return ""; return Number.isInteger(n) ? "$" + n : "$" + n.toFixed(2); };
 
+  const OL_TEMPLATES = {
+    sensei: {
+      title: "Code Sensei",
+      employment: "part-time",
+      reportsTo: "the Center Director, at Code Ninjas, Yorba Linda",
+      duties: [
+        "To learn Code Ninjas curriculum.",
+        "Provide center tours to prospective customers.",
+        "Create a positive and safe environment in which students can grow.",
+        "Evaluate student progress.",
+        "Provide feedback to parents after working with students.",
+        "Follow opening/closing duties daily which include maintaining corporate standards of cleanliness.",
+        "Report weekly to Center Director and Center Manager on progress.",
+        "Report daily to the Center Director and Center Manager with respect to day’s activities, efficiency & productivity in dojo.",
+        "Work with Center Director and Center Manager on day-to-day basis to understand the expectations and complete all assigned tasks on-time and meet all set expectations with quality."
+      ]
+    },
+    director: {
+      title: "Center Director",
+      employment: "full-time",
+      reportsTo: "the Owner",
+      duties: [
+        "Oversee daily center operations and maintain a positive, safe learning environment.",
+        "Lead, schedule, and mentor the Code Sensei team.",
+        "Drive enrollment growth through center tours, sales, and customer follow-up.",
+        "Build and manage parent and student relationships and resolve concerns.",
+        "Maintain center cleanliness and uphold corporate operational standards.",
+        "Track center performance metrics and report results to ownership.",
+        "Oversee curriculum delivery and monitor student progress.",
+        "Manage scheduling, inventory, and day-to-day administrative tasks."
+      ]
+    }
+  };
+
   function renderOffer() {
-    // the letter body is user-editable, so a placeholder span may have been
-    // deleted — skip any that no longer exist
-    const put = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+    const type = $("olType").value === "director" ? "director" : "sensei";
+    const tpl = OL_TEMPLATES[type];
+    $("compSensei").hidden = type !== "sensei";
+    $("compDirector").hidden = type !== "director";
+    $("olTitle").placeholder = tpl.title;
+
     const name = $("olName").value.trim();
-    put("oDate", olLong($("olDate").value) || "Date");
-    put("oLocation", $("olLocation").value.trim() || "Yorba Linda, CA");
-    put("oName", name || "XXXXXX");
-    put("oTitle", $("olTitle").value.trim() || "Code Sensei");
-    put("oDojoWage", wageFmt($("olDojoWage").value) || "$—");
-    put("oSchoolWage", wageFmt($("olSchoolWage").value) || "$—");
-    put("oDeadline", olShort($("olDeadline").value) || "______");
+    $("oDate").textContent = olLong($("olDate").value) || "Date";
+    $("oLocation").textContent = $("olLocation").value.trim() || "Yorba Linda, CA";
+    $("oName").textContent = name || "XXXXXX";
+
+    const title = $("olTitle").value.trim() || tpl.title;
+    $("oIntro").textContent = `We are pleased to offer you a ${tpl.employment} position at Code Dojo LLC, as a ${title}, contingent upon background check, NDA acceptance and I-9 verification. You will be reporting directly to ${tpl.reportsTo}. We believe your skills are a match for our requirements.`;
+
+    const ul = $("oDuties");
+    ul.innerHTML = "";
+    tpl.duties.forEach(d => { const li = document.createElement("li"); li.textContent = d; ul.appendChild(li); });
+
+    let compText;
+    if (type === "director") {
+      const w = wageFmt($("olWage").value);
+      compText = w ? `Compensation for this position is ${w}/hour` : "";
+    } else {
+      const parts = [];
+      const dojoWage = wageFmt($("olDojoWage").value);
+      const schoolWage = wageFmt($("olSchoolWage").value);
+      if (dojoWage) parts.push(`${dojoWage}/hour in the Dojo`);
+      if (schoolWage) parts.push(`${schoolWage}/hour in the schools`);
+      compText = parts.length ? `Compensation for this position is ${parts.join(" and ")}` : "";
+    }
+    const comp = $("oComp");
+    if (compText) {
+      comp.style.display = "";
+      comp.textContent = `${compText} to be paid on a twice a month basis either by direct deposit or by a check.`;
+    } else {
+      comp.style.display = "none";
+    }
+    $("oDeadline").textContent = olShort($("olDeadline").value) || "______";
     const signer = $("olSigner").value.trim() || "Sean Coon";
-    put("oSigner", signer);
-    put("oSigner2", signer);
-    put("oSignerTitle", $("olSignerTitle").value.trim() || "Owner, Code Dojo LLC");
-    put("oSignDate", olShort($("olSignDate").value) || "______");
-    const footerVal = $("olFooter").value.trim() || "Code Ninjas, Yorba Linda, CA";
-    put("oFooter", footerVal);
-    // body sentence uses just the center name (first segment before the address)
-    put("oCenter", footerVal.split("|")[0].trim() || "Code Ninjas, Yorba Linda, CA");
+    $("oSigner").textContent = signer;
+    $("oSigner2").textContent = signer;
+    $("oSignerTitle").textContent = $("olSignerTitle").value.trim() || "Owner, Code Dojo LLC";
+    $("oSignDate").textContent = olShort($("olSignDate").value) || "______";
+    $("oFooter").textContent = $("olFooter").value.trim() || "Code Ninjas, Yorba Linda, CA";
 
     const fname = name ? `${name.replace(/\s+/g, "")}_OfferLetter.pdf` : "";
     $("fileNameHint").textContent = fname ? "Suggested file name: " + fname : "";
     document.title = fname ? fname.replace(/\.pdf$/, "") : "Offer Letter";
   }
   OL_FIELDS.forEach(id => $(id).addEventListener("input", renderOffer));
-
-  /* ---------- Send for signature ---------- */
-  const SENT_KEY = "cn_sent_letters";
-  const signURL = id => `${location.origin}/sign.html#${id}`;
-  const sentStatuses = {};
-
-  function renderSentList() {
-    const list = store.get(SENT_KEY, []);
-    const wrap = $("sentList");
-    wrap.innerHTML = "";
-    list.forEach(item => {
-      const row = document.createElement("div");
-      row.className = "sent-row";
-      const st = sentStatuses[item.id];
-      const chip = st === "signed" ? '<span class="sent-chip signed">Signed ✓</span>'
-        : st === "gone" ? '<span class="sent-chip gone">Deleted</span>'
-        : '<span class="sent-chip">Pending</span>';
-      row.innerHTML = `
-        <div class="who"><div class="nm"></div><div class="dt"></div></div>
-        ${chip}
-        <button type="button" class="cp" title="Copy signing link">Copy link</button>
-        <button type="button" class="op" title="Open the letter">Open</button>
-        <button type="button" class="rm" title="Delete this letter and its link">✕</button>`;
-      row.querySelector(".nm").textContent = item.name;
-      row.querySelector(".dt").textContent = new Date(item.created).toLocaleDateString();
-      row.querySelector(".cp").addEventListener("click", async e => {
-        try {
-          await navigator.clipboard.writeText(signURL(item.id));
-          e.target.textContent = "Copied!";
-          setTimeout(() => { e.target.textContent = "Copy link"; }, 1200);
-        } catch { prompt("Copy this link:", signURL(item.id)); }
-      });
-      row.querySelector(".op").addEventListener("click", () => window.open(signURL(item.id), "_blank"));
-      row.querySelector(".rm").addEventListener("click", async () => {
-        if (!confirm(`Delete the letter for ${item.name}? The signing link will stop working.`)) return;
-        try { await fetch(`/api/letter?id=${item.id}`, { method: "DELETE" }); } catch {}
-        store.set(SENT_KEY, store.get(SENT_KEY, []).filter(x => x.id !== item.id));
-        renderSentList();
-      });
-      wrap.appendChild(row);
-    });
-  }
-
-  let sentRefreshed = false;
-  async function refreshSentStatuses() {
-    renderSentList();
-    const list = store.get(SENT_KEY, []);
-    if (!list.length || sentRefreshed || location.protocol === "file:") return;
-    sentRefreshed = true;
-    await Promise.all(list.map(async item => {
-      try {
-        const r = await fetch(`/api/letter?id=${item.id}`);
-        sentStatuses[item.id] = r.status === 404 ? "gone" : (await r.json()).status;
-      } catch {}
-    }));
-    renderSentList();
-  }
-
-  $("olSendBtn").addEventListener("click", async () => {
-    const name = $("olName").value.trim();
-    if (!name) { alert("Enter the employee name first."); return; }
-    if (location.protocol === "file:") { alert("Signing links only work on the deployed site, not when the file is opened directly."); return; }
-    renderOffer();
-    const btn = $("olSendBtn");
-    btn.disabled = true;
-    btn.textContent = "Creating link…";
-    try {
-      const r = await fetch("/api/letter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "create",
-          name,
-          html: document.querySelector("#offerSheet .ol-inner").outerHTML,
-          footer: $("oFooter").textContent
-        })
-      });
-      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "HTTP " + r.status);
-      const { id } = await r.json();
-      const list = store.get(SENT_KEY, []);
-      list.unshift({ id, name, created: new Date().toISOString() });
-      store.set(SENT_KEY, list);
-      sentStatuses[id] = "pending";
-      renderSentList();
-      try {
-        await navigator.clipboard.writeText(signURL(id));
-        alert(`Link created and copied to your clipboard:\n\n${signURL(id)}\n\nSend it to ${name}.`);
-      } catch {
-        prompt(`Link created — copy it and send it to ${name}:`, signURL(id));
-      }
-    } catch (err) {
-      alert("Could not create the link: " + err.message);
-    }
-    btn.disabled = false;
-    btn.textContent = "Create signing link for this letter";
-  });
 
   /* ---------- Custom centers (footer dropdown) ---------- */
   const CENTER_KEY = "cn_centers";
@@ -1181,7 +1101,7 @@ Seal Beach, CA 90740
     $("offerSheet").hidden = invoice;
     document.querySelectorAll(".mode-toggle button").forEach(b =>
       b.classList.toggle("active", b.dataset.mode === mode));
-    if (invoice) render(); else { renderOffer(); refreshSentStatuses(); }
+    if (invoice) render(); else renderOffer();
     fitSheet();
   }
   document.querySelectorAll(".mode-toggle button").forEach(b =>
