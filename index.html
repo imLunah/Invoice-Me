@@ -925,12 +925,15 @@ Seal Beach, CA 90740
   const olLong = v => v ? new Date(v + "T00:00:00").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "";
   const olShort = v => { if (!v) return ""; const d = new Date(v + "T00:00:00"); return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`; };
   const wageFmt = v => { const n = parseFloat(v); if (isNaN(n)) return ""; return Number.isInteger(n) ? "$" + n : "$" + n.toFixed(2); };
+  // "Code Ninjas, Yorba Linda, CA | addr | phone" -> "Yorba Linda, CA"
+  const centerLocation = () => ($("olFooter").value || "").split("|")[0].trim().replace(/^Code Ninjas,\s*/i, "").trim();
+  const centerCity = () => centerLocation().replace(/,\s*[A-Z]{2}$/i, "").trim();
 
   const OL_TEMPLATES = {
     sensei: {
       title: "Code Sensei",
       employment: "part-time",
-      reportsTo: "the Center Director, at Code Ninjas, Yorba Linda",
+      reportsTo: "the Center Director, at Code Ninjas, {center}",
       duties: [
         "To learn Code Ninjas curriculum.",
         "Provide center tours to prospective customers.",
@@ -969,11 +972,12 @@ Seal Beach, CA 90740
 
     const name = $("olName").value.trim();
     $("oDate").textContent = olLong($("olDate").value) || "Date";
-    $("oLocation").textContent = $("olLocation").value.trim() || "Yorba Linda, CA";
+    $("oLocation").textContent = $("olLocation").value.trim() || centerLocation() || "Yorba Linda, CA";
     $("oName").textContent = name || "XXXXXX";
 
     const title = $("olTitle").value.trim() || tpl.title;
-    $("oIntro").textContent = `We are pleased to offer you a ${tpl.employment} position at Code Dojo LLC, as a ${title}, contingent upon background check, NDA acceptance and I-9 verification. You will be reporting directly to ${tpl.reportsTo}. We believe your skills are a match for our requirements.`;
+    const reportsTo = tpl.reportsTo.replace("{center}", centerCity() || "Yorba Linda");
+    $("oIntro").textContent = `We are pleased to offer you a ${tpl.employment} position at Code Dojo LLC, as a ${title}, contingent upon background check, NDA acceptance and I-9 verification. You will be reporting directly to ${reportsTo}. We believe your skills are a match for our requirements.`;
 
     const ul = $("oDuties");
     ul.innerHTML = "";
