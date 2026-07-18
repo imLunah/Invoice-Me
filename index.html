@@ -369,6 +369,43 @@
     color: var(--blue);
   }
   .ol-sign-right { min-width: 2.1in; }
+  .sent-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 11px;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+  .sent-row .who { flex: 1; min-width: 0; }
+  .sent-row .who .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sent-row .who .dt { color: var(--muted); font-size: 11px; }
+  .sent-chip {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: #f4f1e4;
+    color: #8a7a2a;
+    white-space: nowrap;
+  }
+  .sent-chip.signed { background: #e8f4e8; color: #2e7d32; }
+  .sent-chip.gone { background: #f4e8e8; color: var(--red); }
+  .sent-row button {
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 3px 4px;
+  }
+  .sent-row button:hover { text-decoration: underline; }
+  .sent-row button.rm { color: var(--muted); }
+  .sent-row button.rm:hover { color: var(--red); text-decoration: none; }
   .ol-footer {
     background: #3f7cb8;
     color: #fff;
@@ -568,6 +605,12 @@
         </div>
         <div class="hint">Added centers are saved on this device and appear in the dropdown above.</div>
       </div>
+    </div>
+
+    <div class="section">
+      <h2>Send for signature</h2>
+      <button type="button" class="btn btn-secondary btn-small" id="olSendBtn" style="width:100%">Create signing link for this letter</button>
+      <div id="sentList"></div>
     </div>
 
     <button class="btn btn-primary" id="olPrintBtn">Save as PDF / Print</button>
@@ -1016,6 +1059,102 @@ Seal Beach, CA 90740
   }
   OL_FIELDS.forEach(id => $(id).addEventListener("input", renderOffer));
 
+  /* ---------- Send for signature ---------- */
+  const SENT_KEY = "cn_sent_letters";
+  const signURL = id => `${location.origin}/sign.html#${id}`;
+  const sentStatuses = {};
+
+  function renderSentList() {
+    const list = store.get(SENT_KEY, []);
+    const wrap = $("sentList");
+    wrap.innerHTML = "";
+    list.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "sent-row";
+      const st = sentStatuses[item.id];
+      const chip = st === "signed" ? '<span class="sent-chip signed">Signed ✓</span>'
+        : st === "gone" ? '<span class="sent-chip gone">Deleted</span>'
+        : '<span class="sent-chip">Pending</span>';
+      row.innerHTML = `
+        <div class="who"><div class="nm"></div><div class="dt"></div></div>
+        ${chip}
+        <button type="button" class="cp" title="Copy signing link">Copy link</button>
+        <button type="button" class="op" title="Open the letter">Open</button>
+        <button type="button" class="rm" title="Delete this letter and its link">✕</button>`;
+      row.querySelector(".nm").textContent = item.name;
+      row.querySelector(".dt").textContent = new Date(item.created).toLocaleDateString();
+      row.querySelector(".cp").addEventListener("click", async e => {
+        try {
+          await navigator.clipboard.writeText(signURL(item.id));
+          e.target.textContent = "Copied!";
+          setTimeout(() => { e.target.textContent = "Copy link"; }, 1200);
+        } catch { prompt("Copy this link:", signURL(item.id)); }
+      });
+      row.querySelector(".op").addEventListener("click", () => window.open(signURL(item.id), "_blank"));
+      row.querySelector(".rm").addEventListener("click", async () => {
+        if (!confirm(`Delete the letter for ${item.name}? The signing link will stop working.`)) return;
+        try { await fetch(`/api/letter?id=${item.id}`, { method: "DELETE" }); } catch {}
+        store.set(SENT_KEY, store.get(SENT_KEY, []).filter(x => x.id !== item.id));
+        renderSentList();
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  let sentRefreshed = false;
+  async function refreshSentStatuses() {
+    renderSentList();
+    const list = store.get(SENT_KEY, []);
+    if (!list.length || sentRefreshed || location.protocol === "file:") return;
+    sentRefreshed = true;
+    await Promise.all(list.map(async item => {
+      try {
+        const r = await fetch(`/api/letter?id=${item.id}`);
+        sentStatuses[item.id] = r.status === 404 ? "gone" : (await r.json()).status;
+      } catch {}
+    }));
+    renderSentList();
+  }
+
+  $("olSendBtn").addEventListener("click", async () => {
+    const name = $("olName").value.trim();
+    if (!name) { alert("Enter the employee name first."); return; }
+    if (location.protocol === "file:") { alert("Signing links only work on the deployed site, not when the file is opened directly."); return; }
+    renderOffer();
+    const btn = $("olSendBtn");
+    btn.disabled = true;
+    btn.textContent = "Creating link…";
+    try {
+      const r = await fetch("/api/letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          name,
+          html: document.querySelector("#offerSheet .ol-inner").outerHTML,
+          footer: $("oFooter").textContent
+        })
+      });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "HTTP " + r.status);
+      const { id } = await r.json();
+      const list = store.get(SENT_KEY, []);
+      list.unshift({ id, name, created: new Date().toISOString() });
+      store.set(SENT_KEY, list);
+      sentStatuses[id] = "pending";
+      renderSentList();
+      try {
+        await navigator.clipboard.writeText(signURL(id));
+        alert(`Link created and copied to your clipboard:\n\n${signURL(id)}\n\nSend it to ${name}.`);
+      } catch {
+        prompt(`Link created — copy it and send it to ${name}:`, signURL(id));
+      }
+    } catch (err) {
+      alert("Could not create the link: " + err.message);
+    }
+    btn.disabled = false;
+    btn.textContent = "Create signing link for this letter";
+  });
+
   /* ---------- Custom centers (footer dropdown) ---------- */
   const CENTER_KEY = "cn_centers";
   const centerValue = c => `Code Ninjas, ${c.name}, CA | ${c.address} | ${c.phone}`;
@@ -1105,7 +1244,7 @@ Seal Beach, CA 90740
     $("offerSheet").hidden = invoice;
     document.querySelectorAll(".mode-toggle button").forEach(b =>
       b.classList.toggle("active", b.dataset.mode === mode));
-    if (invoice) render(); else renderOffer();
+    if (invoice) render(); else { renderOffer(); refreshSentStatuses(); }
     fitSheet();
   }
   document.querySelectorAll(".mode-toggle button").forEach(b =>
